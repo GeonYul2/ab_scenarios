@@ -9,7 +9,7 @@
 
 ## 1) 경유 매장: ‘따로 노는’ 지도와 리스트 — 분절된 탐색 경험 통합
 
-![경유 매장 화면](./assets/01_stopover_map_list.png)
+<img src="./assets/01_stopover_map_list.png" alt="경유 매장 화면" width="420" />
 
 ### 문제
 - 목적지를 찍으면 지도(상단)와 매장 리스트(하단)가 같이 보이지만, 서로 연동 되지 않음
@@ -53,8 +53,8 @@ Guardrail (기술 부하/로딩)
 
 ## 2) 친구에게 커피 쏘기: 수신자 확인 “불안” 줄이기
 
-![친구 선택 화면](./assets/02_gift_select.png)
-![메시지 작성 화면](./assets/03_gift_message.png)
+<img src="./assets/02_gift_select.png" alt="친구 선택 화면" width="360" />
+<img src="./assets/03_gift_message.png" alt="메시지 작성 화면" width="360" />
 
 ### 문제(왜 불안한가)
 - 메시지 작성 화면에서 수신자가 “N명의 친구”로만 보이면,
@@ -90,7 +90,7 @@ Guardrail (부작용)
 
 ## 3) 스토리(리뷰) 답글: “효과 수치 제시”가 점주 행동을 바꾸는가
 
-![스토리 화면](./assets/04_story.png)
+<img src="./assets/04_story.png" alt="스토리 화면" width="420" />
 
 ### 핵심 질문
 - 답글을 잘 다는 매장은 단골 전환이 더 높은가?
@@ -131,7 +131,7 @@ Outcome
 
 ## 보너스) 패스오더 아이덴티티와 연결되는 핵심 지표
 
-![패스오더 아이덴티티](./assets/00_passorder_identity.png)
+<img src="./assets/00_passorder_identity.png" alt="패스오더 아이덴티티" width="420" />
 
 “패스오더는 카페와 고객을 연결하는 가장 효과적인 홍보 채널입니다”이라는 문구를 보고, 저는 “그 연결이 성공했는지 어떤 숫자로 확인할까?”를 떠올렸습니다.
 
