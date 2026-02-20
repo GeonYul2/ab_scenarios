@@ -1,0 +1,9 @@
+# Private writing drafts (never push)
+social_posts/
+
+# Local tool artifacts
+.omx/
+
+# OS / logs
+.DS_Store
+*.log
