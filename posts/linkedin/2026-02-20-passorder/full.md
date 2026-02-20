@@ -53,8 +53,12 @@ Guardrail (기술 부하/로딩)
 
 ## 2) 친구에게 커피 쏘기: 수신자 확인 “불안” 줄이기
 
-<img src="./assets/02_gift_select.png" alt="친구 선택 화면" width="360" />
-<img src="./assets/03_gift_message.png" alt="메시지 작성 화면" width="360" />
+<table>
+  <tr>
+    <td><img src="./assets/02_gift_select.png" alt="친구 선택 화면" width="320" /></td>
+    <td><img src="./assets/03_gift_message.png" alt="메시지 작성 화면" width="320" /></td>
+  </tr>
+</table>
 
 ### 문제(왜 불안한가)
 - 메시지 작성 화면에서 수신자가 “N명의 친구”로만 보이면,
@@ -90,7 +94,7 @@ Guardrail (부작용)
 
 ## 3) 스토리(리뷰) 답글: “효과 수치 제시”가 점주 행동을 바꾸는가
 
-<img src="./assets/04_story.png" alt="스토리 화면" width="420" />
+<img src="./assets/04_story.png" alt="스토리 화면" width="340" />
 
 ### 핵심 질문
 - 답글을 잘 다는 매장은 단골 전환이 더 높은가?
