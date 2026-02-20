@@ -136,7 +136,7 @@ Outcome
 ---
 
 ## 관련 문서
-- 케이스 1: `../cases/01_stopover_store_sync.md`
-- 케이스 2: `../cases/02_gift_recipient_clarity.md`
-- 케이스 3: `../cases/03_story_reply_effect_and_intervention.md`
-- 지표 문서: `../strategy/01_identity_metric_regular_conversion.md`
+- 케이스 1: `./01_case_stopover_sync.md`
+- 케이스 2: `./02_case_gift_recipient.md`
+- 케이스 3: `./03_case_story_reply.md`
+- 지표 문서: `./04_metric_regular_conversion.md`

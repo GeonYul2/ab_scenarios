@@ -1,13 +1,17 @@
 # ab_scenarios
 
-실서비스 기반 실험 설계 포트폴리오입니다.
+LinkedIn에서 유입되는 사람을 기준으로, **플랫폼 → 날짜** 구조로 정리한 실험 설계 아카이브입니다.
 
-## 공개 범위 (GitHub)
-- `cases/` : 실험 케이스
-- `strategy/` : 핵심 지표 관점
-- `public_posts/` : LinkedIn에서 연결할 풀텍스트
-- `image*.png` : 케이스 설명 이미지
+## 구조
+- `posts/linkedin/YYYY-MM-DD-topic/`
+  - `README.md` : 링크드인 유입용 랜딩(요약 + 문서 링크)
+  - `full.md` : 풀텍스트
+  - `01~04_*.md` : 챕터별 상세
+  - `assets/images.md` : 이미지 한 파일 보기
+
+## 현재 포스트
+- 2026-02-20 패스오더: `posts/linkedin/2026-02-20-passorder/README.md`
 
 ## 비공개/로컬 전용
-- `social_posts/` : LinkedIn 초안 (gitignore)
+- `social_posts/` : 게시 전 초안 (gitignore)
 - `.omx/` : 로컬 도구 상태 파일 (gitignore)
