@@ -124,22 +124,24 @@
 
 ---
 
-### 3-4. 제출 후 알림 동의 화면
+### 3-4. 제출 후 알람 동의 화면
 
-<img src="./assets/04_consent.png" alt="견적 받기 동의 화면" width="900" />
+<img src="./assets/04_consent.png" alt="알람 동의 화면" width="900" />
 
-요청 제출 이후에는 맞춤 콘텐츠 또는 알림 동의 성격의 후속 화면이 나타났습니다.
+요청 제출 이후에는 받은 견적으로 바로 넘어가기 전, 알람 동의 화면이 한 번 더 나타났습니다.
 
-이 구간에서 raw 기준으로 직접 확인된 이벤트는 `customer_info_input_start`였습니다.  
-하지만 화면에서 보이는 사용자의 선택지에 비해, 이를 세부적으로 설명해주는 후속 이벤트는 이번 샘플에서 명확하게 확인되지 않았습니다.
+<details>
+<summary>관찰 이벤트 / 핵심 파라미터</summary>
 
-그래서 이 부분은 다음처럼 정리했습니다.
+| Event | Observed params |
+| --- | --- |
+| `customer_info_input_start` | `location=request`, `sep_device_id`, `soomgo_session_id` |
 
-- 실제 화면은 존재함
-- 시작 이벤트는 관찰됨
-- 하지만 후속 선택 이벤트는 명확히 분리해 설명하기 어려움
+</details>
 
-즉, 이 구간은 **후속 계측이 충분한지 확인이 필요한 영역**으로 남겼습니다.
+이 구간에서 raw 기준으로 직접 확인된 이벤트는 `customer_info_input_start`였습니다. 실제 화면 흐름을 함께 보면, 이 이벤트는 알람 동의 화면의 시작 이벤트로 해석하는 것이 가장 자연스러웠습니다.
+
+다만 이 화면에서 사용자가 `동의하고 맞춤 콘텐츠 알림 받기`를 눌렀는지, `나중에 받기`를 눌렀는지까지 구분해주는 후속 이벤트는 이번 raw sample에서 명확히 확인되지 않았습니다. 따라서 이 구간은 **알람 동의 화면의 시작은 관찰되지만, 버튼별 후속 액션 계측은 확인되지 않은 구간**으로 정리했습니다.
 
 ---
 
@@ -147,37 +149,21 @@
 
 <img src="./assets/05_received_quotes.png" alt="도착 견적 화면" width="900" />
 
-제출 이후에는 받은 견적 영역으로 이어졌습니다.
+제출 이후 전환 구간을 지나면, 사용자는 받은 견적 영역으로 이어지게 됩니다.
 
-이 구간에서는 다음 이벤트를 확인했습니다.
+<details>
+<summary>관찰 이벤트 / 핵심 파라미터</summary>
 
-- `view_received_quote_list_page`
-- `customer_landing_im`
+| Event | Observed params |
+| --- | --- |
+| `view_received_quote_list_page` | `service_id`, `service_name`, `request_id`, `category_name`, `location=requested` |
+| `customer_landing_im` | `service_id`, `service_name`, `request_id` |
 
-이를 통해 단순히 요청 제출까지만 본 것이 아니라,
-**제출 이후 사용자가 실제로 도달하는 받은 견적 리스트 화면까지 이벤트 흐름이 이어지는지**를 확인할 수 있었습니다.
+</details>
 
-또한 이 구간은 `request_id`를 기준으로 제출 이후 흐름을 이어서 볼 수 있다는 점에서 의미가 있었습니다.
+이 구간에서는 `view_received_quote_list_page`와 `customer_landing_im`이 연달아 관찰됐습니다. 이를 통해 요청 제출이 완료된 뒤 사용자가 실제로 받은 견적 리스트에 도달했고, 이어서 대화/IM 영역까지 진입할 수 있다는 흐름을 확인할 수 있었습니다.
 
----
-
-### 3-6. 견적 취소/종료 상태 확인
-
-<img src="./assets/06_request_close.png" alt="견적 취소 화면" width="900" />
-
-<img src="./assets/07_closed_quotes.png" alt="취소 후 받은 견적 화면" width="900" />
-
-받은 견적 리스트 이후에는 개별 견적 확인과 요청 종료/취소 관련 흐름도 이어서 확인했습니다.
-
-이 구간에서는 다음 이벤트를 관찰했습니다.
-
-- `view_received_quote_page`
-- `complete_request_close_confirmation`
-
-이를 통해 요청 종료 사유와 종료 상태가 어떤 식으로 이벤트에 반영되는지 확인할 수 있었습니다.
-
-즉, 이번 프로젝트는 단순히 “요청을 보냈다” 수준에서 끝나지 않고,
-**받은 견적 확인 → 종료 상태 확인**까지 후속 행동 흐름을 함께 본 프로젝트였습니다.
+또한 두 이벤트 모두 `request_id`를 공유하고 있어, 제출 이후의 후속 흐름을 request 단위로 이어서 볼 수 있다는 점에서도 의미가 있었습니다.
 
 ---
 
