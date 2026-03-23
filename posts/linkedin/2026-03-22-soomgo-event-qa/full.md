@@ -54,22 +54,22 @@
 숨고 메인 홈에서 시작했습니다.  
 이번 프로젝트의 관심사는 홈 전체가 아니라, **취업 준비 프리셋을 통해 견적 요청 플로우로 진입하는 흐름**이었습니다.
 
-이 구간에서는 다음과 같은 이벤트를 관찰할 수 있었습니다.
+이 구간에서는 홈 진입, 프리셋 섹션 노출, 실험 콘텐츠 노출, 개인화 타입 할당이 함께 관찰됐습니다. 특히 `preset_id`, `preset_name`이 배열로 수집된 점을 근거로, 저는 이를 개별 프리셋 클릭 이벤트가 아니라 **프리셋 섹션이 한 번에 노출된 이벤트**로 해석했습니다. 반대로 `assign_personalization_type`은 `type=inactive_user`, `purpose=content_personalization` 같은 값이 붙어 있어, 사용자의 직접 행동이라기보다 **홈에서 어떤 개인화 로직이 할당됐는지**를 남기는 시스템성 이벤트에 가깝다고 봤습니다.
 
-- `View Main`
-- `view_customer_preset_main_page`
-- `abtest_otg_818_content_display`
-- `assign_personalization_type`
+즉 첫 화면부터도 단순 홈 진입만 기록된 것이 아니라,
+**페이지 진입 / 프리셋 섹션 노출 / 실험 콘텐츠 노출 / 개인화 타입 할당**이 서로 다른 층위로 쌓인다는 점을 확인할 수 있었습니다.
 
-여기서 중요한 건 이벤트 이름만이 아니라, **각 이벤트에 어떤 파라미터가 붙는지에 따라 역할이 달라 보였다는 점**입니다.
+<details>
+<summary>관찰 이벤트 / 핵심 파라미터 보기</summary>
 
-- `View Main`에는 `Member Type=guest`, `location=others`가 붙어 있어, 단순 홈 진입뿐 아니라 **진입 시점의 사용자 상태와 유입 맥락**을 함께 기록하는 이벤트처럼 보였습니다.
-- `view_customer_preset_main_page`에는 `preset_id`, `preset_name`이 **배열 형태**로 들어 있어, 특정 프리셋 1개 클릭이라기보다 **프리셋 섹션/배치 노출**에 가까운 이벤트로 읽혔습니다.
-- `abtest_otg_818_content_display`에는 `current_page_name=고객홈_페이지`, `user_type=guest`가 붙어 있어, 홈 내 특정 실험 콘텐츠 노출을 따로 기록하는 이벤트로 보였습니다.
-- `assign_personalization_type`에는 `location_page=main`, `purpose=content_personalization`, `type=inactive_user`가 붙어 있어, 사용자의 행동이라기보다 **홈에서 어떤 개인화 로직이 할당됐는지**를 남기는 시스템성 이벤트로 해석할 수 있었습니다.
+| Event | Key params | Interpretation clue |
+| --- | --- | --- |
+| `View Main` | `Member Type=guest`, `location=others` | 홈 진입 시점의 사용자 상태와 유입 맥락을 함께 기록 |
+| `view_customer_preset_main_page` | `preset_id[]`, `preset_name[]` | 개별 클릭보다 프리셋 섹션/배치 노출로 해석 |
+| `abtest_otg_818_content_display` | `current_page_name=고객홈_페이지`, `user_type=guest` | 홈 내 특정 실험 콘텐츠 노출 이벤트로 해석 |
+| `assign_personalization_type` | `location_page=main`, `purpose=content_personalization`, `type=inactive_user` | 개인화 로직 할당을 남기는 시스템성 이벤트로 해석 |
 
-즉 첫 화면부터도, 단순히 “홈에서 이벤트가 몇 개 찍혔다”가 아니라
-**페이지 진입 / 프리셋 섹션 노출 / 실험 콘텐츠 노출 / 개인화 타입 할당**이 서로 다른 층위로 기록된다는 점을 확인할 수 있었습니다.
+</details>
 
 다만 홈 하단에 있는 추천 카드/광고 영역은 이번 포트폴리오 핵심 흐름과 직접 연결되지 않는다고 판단해, 본문 서술에서는 제외했습니다.
 
