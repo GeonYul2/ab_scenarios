@@ -161,9 +161,7 @@
 
 </details>
 
-이 구간에서는 `view_received_quote_list_page`와 `customer_landing_im`이 연달아 관찰됐습니다. 이를 통해 요청 제출이 완료된 뒤 사용자가 실제로 받은 견적 리스트에 도달했고, 이어서 대화/IM 영역까지 진입할 수 있다는 흐름을 확인할 수 있었습니다.
-
-또한 두 이벤트 모두 `request_id`를 공유하고 있어, 제출 이후의 후속 흐름을 request 단위로 이어서 볼 수 있다는 점에서도 의미가 있었습니다.
+이 구간에서는 `view_received_quote_list_page`와 `customer_landing_im`이 연달아 관찰됐고, 두 이벤트 모두 같은 `request_id`, `service_id`, `service_name`을 공유했습니다. 이번 샘플만 놓고 보면 `customer_landing_im`의 파라미터는 `view_received_quote_list_page`의 핵심 식별 정보와 크게 다르지 않아, 이 구간은 **이벤트 통합 또는 역할 재정의가 필요한 후보 포인트**로 정리할 수 있었습니다.
 
 ---
 
