@@ -187,35 +187,49 @@
 
 ## 5. 실제 QA에서 검증할 로그 적재 포인트
 
+이 서비스 플로우에서 우선 확인해야 할 것은, 사용자가 원하는 서비스에 진입해 요청폼에 값을 입력하고 최종 제출한 뒤 받은 견적으로 이어지는 **핵심 여정이 로그에 의도한 형태로 기재되는지**입니다.
 
-### 5-1. 서비스 선택 이후 요청폼 시작이 정상적으로 쌓이는지
+### 5-1. 요청폼 입력값이 단계별로 올바르게 기재되는지
 
 관련 구간: 3-2
 
-핵심은 프리셋/서비스 진입 이후 `Start Request Form`이 같은 흐름 안에서 정상적으로 이어지는지 확인하는 것입니다.
+핵심은 사용자가 실제로 선택하거나 입력한 값이 `click_request_form_step_next_button`에 단계별로 정확히 남는지 확인하는 것입니다.
 
-- 검증 방법: 동일 `soomgo_session_id` 기준으로 `customer_total_request_open` 이후 `Start Request Form`이 이어지는지 확인하고, `requestServiceId`, `content_ids`, `Service ID`가 같은 서비스 맥락을 가리키는지 비교합니다.
+- 주요 이벤트/파라미터: `click_request_form_step_next_button`, `request_form_id`, `step_index`, `step_type`, `selected_answer`, `is_last_step`
+- 검증 방법: 동일 `request_form_id` 기준으로 step 이벤트를 시간순 정렬한 뒤, 화면에서 입력한 값과 `selected_answer`가 일치하는지 비교하고, 마지막 단계에서 `is_last_step=true`가 정상 기재되는지 확인합니다.
 
-### 5-2. 요청 제출 이벤트가 선택한 서비스 기준으로 정확히 생성되는지
+### 5-2. 선택한 서비스 맥락이 폼 시작부터 제출까지 일관되게 유지되는지
+
+관련 구간: 3-2 ~ 3-4
+
+핵심은 사용자가 처음 선택한 서비스가 폼 시작, step 진행, 제출 시점까지 동일한 맥락으로 유지되는지 확인하는 것입니다.
+
+- 주요 이벤트/파라미터: `Start Request Form`, `click_request_form_step_next_button`, `Submit Request`, `Service ID`, `Service Name`, `service_id`, `service_name`, `requestServiceId`, `content_category`, `request_form_id`
+- 검증 방법: 동일 `request_form_id`를 기준으로 폼 시작 이벤트와 step 이벤트를 묶고, 최종 `Submit Request`의 `service_id` 및 `service_name`이 같은 서비스 맥락을 가리키는지 비교합니다.
+
+### 5-3. 마지막 입력 이후 제출 이벤트가 정상적으로 기재되는지
 
 관련 구간: 3-4
 
-핵심은 사용자가 선택한 서비스 수만큼 제출 이벤트가 정확히 생성되는지, 그리고 서비스별 request가 올바르게 분리되는지 확인하는 것입니다.
+핵심은 폼 입력이 완료된 뒤 실제 제출 이벤트가 빠짐없이 생성되고, 제출 결과를 식별할 수 있는 값이 함께 남는지 확인하는 것입니다.
 
-- 검증 방법: 단일/복수 서비스 케이스를 나눠 `send_request_finished`와 `Submit Request`가 서비스 수만큼 생성되는지 확인하고, 각 이벤트의 서비스 식별 필드와 `request_id`가 올바르게 대응하는지 비교합니다.
+- 주요 이벤트/파라미터: `click_request_form_step_next_button`, `send_request_finished`, `Submit Request`, `is_last_step`, `request_id`, `service_id`, `requestSendServiceId`
+- 검증 방법: `is_last_step=true`가 기록된 이후 `send_request_finished`와 `Submit Request`가 이어지는지 확인하고, `Submit Request`에 `request_id`가 정상 기재되는지 비교합니다.
 
-### 5-3. 제출 이후 받은 견적 진입이 request 기준으로 정상 연결되는지
-
-관련 구간: 3-5
-
-핵심은 요청 제출 이후 사용자가 실제로 같은 request 맥락 안에서 받은 견적 화면으로 이어지는지 확인하는 것입니다.
-
-- 검증 방법: `Submit Request.request_id`를 기준으로 `view_received_quote_list_page`, `customer_landing_im`이 같은 request로 이어지는지 확인합니다.
-
-### 5-4. 비로그인 사용자가 로그인 후에도 제출 퍼널이 끊기지 않는지
+### 5-4. 비로그인 사용자가 로그인 후에도 같은 요청 흐름으로 복귀하는지
 
 관련 구간: 3-3 ~ 3-4
 
-핵심은 게스트 상태에서 시작한 사용자가 로그인 단계를 거친 뒤에도 요청 제출까지 정상적으로 이어지는지 확인하는 것입니다.
+핵심은 게스트 상태에서 시작한 사용자가 로그인 단계를 거친 뒤에도, 이전에 작성하던 요청 흐름이 끊기지 않고 제출까지 이어지는지 확인하는 것입니다.
 
-- 검증 방법: 동일 `soomgo_session_id`, `sep_device_id` 기준으로 `view_request_sign_in_step` 이후 `complete_user_sign_in`, 제출 이벤트가 같은 세션 안에서 이어지는지 확인합니다.
+- 주요 이벤트/파라미터: `view_request_sign_in_step`, `complete_user_sign_in`, 로그인 이후 첫 폼/제출 이벤트, `soomgo_session_id`, `sep_device_id`, `request_form_id`
+- 검증 방법: 동일 `soomgo_session_id`, `sep_device_id` 기준으로 로그인 게이트 노출 이후 로그인 완료, 이후 제출 이벤트가 같은 흐름 안에서 이어지는지 확인하고, 로그인 전후 폼 맥락이 유지되는지 비교합니다.
+
+### 5-5. 제출 이후 받은 견적 진입이 같은 request로 연결되는지
+
+관련 구간: 3-5
+
+핵심은 제출된 요청이 실제로 받은 견적 화면까지 이어지고, 그 후속 이벤트가 같은 request 맥락 안에서 연결되는지 확인하는 것입니다.
+
+- 주요 이벤트/파라미터: `Submit Request`, `view_received_quote_list_page`, `customer_landing_im`, `request_id`, `service_id`, `service_name`
+- 검증 방법: `Submit Request.request_id`를 기준으로 후속 이벤트를 연결해 `view_received_quote_list_page`와 `customer_landing_im`이 같은 request에 기재되는지 비교합니다.
