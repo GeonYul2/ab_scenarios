@@ -82,24 +82,22 @@
 
 <img src="./assets/02_speech_consulting_entry.png" alt="취업 준비 프리셋 내 스피치 컨설팅 선택 화면" width="900" />
 
-취업 준비 프리셋에 진입한 뒤, 사용자는 세부 서비스 중 **스피치 컨설팅**을 선택해 요청폼으로 들어가게 됩니다.
+취업 준비 프리셋에 진입한 뒤, 사용자는 세부 서비스 중 **스피치 컨설팅**을 선택해 요청폼으로 들어가게 됩니다. 이 구간에서 제가 중요하게 본 건, 프리셋을 눌러 들어간 페이지 자체를 가리키는 이벤트와 실제 폼 작성이 시작되는 이벤트가 분리돼 보인다는 점이었습니다.
 
-이 구간에서는 다음 흐름을 중심으로 봤습니다.
+<details>
+<summary>먼저, 이 화면에서 관찰된 이벤트 / 핵심 파라미터 보기</summary>
 
-- `customer_total_request_open`
-- `Start Request Form`
-- 이후 `click_request_form_step_next_button`
+| Event | Observed params |
+| --- | --- |
+| `customer_total_request_open` | `preset_id=취업 준비`, `preset_name=취업 준비`, `service_count=8`, `total_request_type=preset`, `location=customer_main_page_click_preset_carousel_item` |
+| `Start Request Form` | `Form ID`, `Service ID=404`, `Service Name=스피치 컨설팅`, `requestServiceId[]`, `content_category[]`, `content_ids=404`, `form_type=chat_request` |
+| `click_request_form_step_next_button` | `request_form_id`, `step_index`, `step_type`, `selected_answer`, `is_last_step` |
 
-요청폼 중간 step(스크린샷 5~12)은 반복 선택 UI이기 때문에 이 글에서는 모두 싣지 않았습니다.  
-대신 raw 관찰 결과를 통해,
+</details>
 
-- `request_form_id`
-- `step_index`
-- `step_type`
-- `selected_answer`
-- `is_last_step`
+이번 샘플 기준으로 `customer_total_request_open`은 **취업 준비 프리셋 페이지에 진입했다는 사실**을 보여주는 이벤트에 가깝고, 그 뒤의 `Start Request Form`부터가 실제 요청폼 작성이 시작되는 구간으로 읽혔습니다. 다만 내부 spec을 확인한 것은 아니기 때문에, 이 차이는 확정이 아니라 **현재 raw 흐름을 기준으로 한 해석**으로 남겨두는 편이 안전하다고 봤습니다.
 
-같은 파라미터가 어떻게 누적되는지 확인했습니다.
+또한 `Start Request Form`에는 `requestServiceId`, `content_category`, `content_ids`가 함께 붙어 있어, 단순히 “폼이 열렸다”기보다 **어떤 서비스 맥락으로 폼이 시작됐는지**를 같이 전달하는 구조로 보였습니다. 이어서 `click_request_form_step_next_button`에 `request_form_id`가 붙기 시작하면서부터는, 서비스 선택 이후의 추상적인 흐름이 아니라 **하나의 요청폼 인스턴스**를 따라가는 구간으로 읽을 수 있었습니다. 예를 들어 같은 스피치 컨설팅 요청이라도 폼을 연 시점과 작성 흐름은 매번 달라질 수 있기 때문에, `request_form_id`는 “지금 작성 중인 이 폼 묶음”을 식별하는 값처럼 이해하는 것이 자연스러웠습니다. 이때 `step_index`는 질문 의미 자체라기보다, 현재 폼 안에서 사용자가 몇 번째 단계를 진행 중인지 보여주는 순서 값으로 보는 편이 더 안전했습니다.
 
 ---
 
