@@ -146,10 +146,9 @@
 
 - `view_received_quote_list_page`
 - `customer_landing_im`
-- `view_received_quote_page` -- 이것은 3-6 으로 가야함. # 꼭 확인해서 내리자 OMX야.
 
 이를 통해 단순히 요청 제출까지만 본 것이 아니라,
-**제출 이후 사용자가 실제로 도달하는 후속 화면까지 이벤트 흐름이 이어지는지**를 확인할 수 있었습니다.
+**제출 이후 사용자가 실제로 도달하는 받은 견적 리스트 화면까지 이벤트 흐름이 이어지는지**를 확인할 수 있었습니다.
 
 또한 이 구간은 `request_id`를 기준으로 제출 이후 흐름을 이어서 볼 수 있다는 점에서 의미가 있었습니다.
 
@@ -161,9 +160,13 @@
 
 <img src="./assets/07_closed_quotes.png" alt="취소 후 받은 견적 화면" width="900" />
 
-받은 견적 화면 이후에는 요청 종료/취소 관련 흐름도 확인했습니다.
+받은 견적 리스트 이후에는 개별 견적 확인과 요청 종료/취소 관련 흐름도 이어서 확인했습니다.
 
-이 구간에서는 `complete_request_close_confirmation`이 관찰됐습니다.  
+이 구간에서는 다음 이벤트를 관찰했습니다.
+
+- `view_received_quote_page`
+- `complete_request_close_confirmation`
+
 이를 통해 요청 종료 사유와 종료 상태가 어떤 식으로 이벤트에 반영되는지 확인할 수 있었습니다.
 
 즉, 이번 프로젝트는 단순히 “요청을 보냈다” 수준에서 끝나지 않고,
@@ -259,68 +262,24 @@
 
 ---
 
-## 6. 산출물
-
-이번 프로젝트에서는 아래 문서들을 정리했습니다.
-
-- `imgae/tracking_plans/portfolio/tracking_plan_observed.tsv`
-- `imgae/tracking_plans/portfolio/tracking_plan_observed.html`
-- `imgae/tracking_plans/portfolio/tracking_plan_observed_review.html`
-- `imgae/tracking_plans/portfolio/tracking_plan_canonical.tsv`
-- `imgae/tracking_plans/portfolio/tracking_plan_change_log.tsv`
-- `imgae/evidence/raw_event_log.md`
-- `imgae/evidence/image_event_mapping.md`
-
-이 산출물들은 각각,
-
-- **실제 관찰 사실 정리**
-- **표준화 방향 정리**
-- **변경 이유 정리**
-- **QA 후보 포인트 정리**
-
-를 위한 역할을 나눠 갖고 있습니다.
-
----
-
-## 7. 이 프로젝트로 보여주고 싶은 역량
-
-이 프로젝트를 통해 보여주고 싶은 역량은 아래와 같습니다.
-
-### 7-1. 제한된 환경에서도 로그를 관찰하고 구조화하는 능력
-
-내부 스키마와 warehouse에 접근할 수 없더라도,
-관찰 가능한 surface를 이용해 이벤트 수집 상태를 정리할 수 있습니다.
-
-### 7-2. 이벤트를 QA 관점으로 읽는 능력
-
-이벤트를 단순히 나열하는 것이 아니라,
-
-- 어디서 표기 차이가 나는지
-- 어디서 반복 관찰되는지
-- 어디서 step 흐름을 더 확인해야 하는지
-- 어디서 연결 키가 약한지
-
-를 검증 포인트로 바꿔볼 수 있습니다.
-
-### 7-3. Tracking Plan과 QA 문서를 연결하는 능력
-
-Observed → Canonical → Change Log로 이어지는 구조를 만들며,
-이후 SQL / warehouse QA로 이어질 수 있는 기준 문서를 정리할 수 있습니다.
-
----
-
-## 8. 정리
+## 6. 결론
 
 이 프로젝트는 단순히 “숨고 이벤트를 몇 개 봤다”는 기록이 아닙니다.
 
 오히려,
 
 - 실제 이벤트 수집 결과를 직접 관찰하고
-- 관찰 결과를 Tracking Plan 형태로 정리하고
-- 오류를 단정하지 않되 QA 검증 포인트를 도출해보고
+- 관찰 결과를 Tracking Plan 형태로 구조화하고
+- 오류를 섣불리 단정하지 않으면서도 QA 검증 포인트를 도출하고
 - 이후 데이터 가이드라인과 SQL 검증으로 확장 가능한 기준을 만드는
 
 **로그 QA 학습 프로젝트**로 보는 것이 더 정확합니다.
 
-입사 후에는 이런 방식으로,
+이 과정을 통해 보여주고 싶은 역량도 분명합니다.
+
+- 제한된 환경에서도 로그를 관찰하고 구조화하는 능력
+- 이벤트를 단순 나열이 아니라 QA 관점의 검증 포인트로 읽어내는 능력
+- Observed Tracking Plan을 이후 Canonical Tracking Plan과 검증 문서로 연결하는 능력
+
+즉, 입사 후에도 이런 방식으로
 **로그 구조 점검 / Tracking Plan 정리 / QA 포인트 도출 / 검증 기준 문서화**에 기여할 수 있음을 보여주는 프로젝트로 정리했습니다.
