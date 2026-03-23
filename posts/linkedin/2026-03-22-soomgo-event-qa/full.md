@@ -165,24 +165,25 @@
 
 ---
 
-## 4. 관찰을 통해 확인한 이벤트 구조
+## 4. 관찰을 통해 도출한 개선 포인트
 
-이번 관찰에서 직접 확인한 주요 이벤트는 아래와 같습니다.
+이번 관찰을 통해, 단순히 이벤트가 존재하는지 확인하는 것을 넘어 **어디를 더 정리하거나 개선해야 하는지**도 함께 드러났습니다.
 
-- 홈 진입: `View Main`
-- 프리셋 노출: `view_customer_preset_main_page`
-- 프리셋 진입: `customer_total_request_open`
-- 요청 시작: `Start Request Form`
-- 요청폼 진행: `click_request_form_step_next_button`
-- 로그인 게이트: `view_request_sign_in_step`
-- 로그인 완료: `complete_user_sign_in`
-- 요청 제출: `send_request_finished`, `Submit Request`
-- 제출 후 후속 화면: `customer_info_input_start`
-- 받은 견적: `view_received_quote_list_page`, `customer_landing_im`, `view_received_quote_page`
-- 요청 종료: `complete_request_close_confirmation`
+### 4-1. 제출 이벤트 역할을 더 명확히 나눌 필요
 
-이 흐름을 통해, 실제 서비스의 이벤트가 단순 page view 중심이 아니라
-**시작 / 진행 / 인증 / 제출 / 후속 행동** 구조로 쌓인다는 점을 확인할 수 있었습니다.
+`send_request_finished`와 `Submit Request`는 서비스 단위로 짝을 이루며 거의 연속해서 관찰됐습니다. 다만 이번 관찰만으로는 두 이벤트가 서로 다른 역할을 충분히 설명하는지 분명하지 않았습니다. 따라서 이 구간은 **제출 이벤트의 역할을 더 명확히 정의하거나, 필요하다면 통합 여부를 검토할 포인트**로 정리할 수 있었습니다.
+
+### 4-2. 받은 견적 진입 이벤트는 통합 검토 후보
+
+`view_received_quote_list_page`와 `customer_landing_im`은 같은 `request_id`, `service_id`, `service_name`을 공유했고, 파라미터 구조도 매우 유사했습니다. 이번 샘플 기준으로는 두 이벤트가 서로 다른 사용자 행동을 충분히 분리해 설명하기보다, 같은 후속 진입 흐름을 중복 기록하는 쌍에 가깝게 보였습니다. 따라서 이 구간은 **이벤트 통합 또는 역할 재정의가 필요한 후보 포인트**로 제시할 수 있었습니다.
+
+### 4-3. 알람 동의 화면의 후속 액션 계측 보강 필요
+
+`customer_info_input_start`를 통해 알람 동의 화면의 시작은 확인할 수 있었지만, 사용자가 `동의하고 맞춤 콘텐츠 알림 받기`를 눌렀는지 `나중에 받기`를 눌렀는지까지 설명하는 후속 이벤트는 확인되지 않았습니다. 즉 화면 시작은 계측되지만, **실제 선택 결과를 추적하는 이벤트는 보강이 필요해 보이는 구간**이었습니다.
+
+### 4-4. 파라미터 명명 규칙은 표준화 여지 존재
+
+관찰 과정에서는 `Member Type`과 `user_type`, `Service ID`와 `service_id`/`serviceId`처럼 같은 의미로 보이지만 표기 규칙이 다른 필드들이 함께 나타났습니다. 이런 차이는 raw를 읽는 단계에서는 큰 문제가 아니더라도, 이후 tracking plan 정리나 SQL 기반 검증 단계에서는 혼선을 만들 수 있습니다. 따라서 이 부분은 **파라미터 명명 표준화가 필요한 포인트**로 남았습니다.
 
 ---
 
