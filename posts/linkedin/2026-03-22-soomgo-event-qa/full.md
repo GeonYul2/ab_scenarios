@@ -59,21 +59,18 @@
 <details>
 <summary>먼저, 이 화면에서 관찰된 이벤트 / 핵심 파라미터 보기</summary>
 
-| Event | Key params | Interpretation clue |
-| --- | --- | --- |
-| `View Main` | `Member Type=guest`, `location=others` | 홈 진입 시점의 사용자 상태와 유입 맥락을 함께 기록 |
-| `view_customer_preset_main_page` | `preset_id[]`, `preset_name[]` | 개별 클릭보다 프리셋 섹션/배치 노출로 해석 |
-| `abtest_otg_818_content_display` | `current_page_name=고객홈_페이지`, `user_type=guest` | 홈 내 특정 실험 콘텐츠 노출 이벤트로 해석 |
-| `assign_personalization_type` | `location_page=main`, `purpose=content_personalization`, `type=inactive_user` | 개인화 로직 할당을 남기는 시스템성 이벤트로 해석 |
+| Event | Observed params |
+| --- | --- |
+| `View Main` | `Member Type=guest`, `location=others` |
+| `view_customer_preset_main_page` | `preset_id[]`, `preset_name[]`, `user_type=guest` |
+| `abtest_otg_818_content_display` | `current_page_name=고객홈_페이지`, `user_type=guest` |
+| `assign_personalization_type` | `location_page=main`, `purpose=content_personalization`, `type=inactive_user` |
 
 </details>
 
-이 중 프리셋 섹션 노출(`view_customer_preset_main_page`)은 `preset_id`, `preset_name`이 배열로 수집된다는 점 때문에, 개별 프리셋 카드 클릭이 아니라 **프리셋 섹션이 한 번에 노출된 이벤트**로 해석했습니다. 내부 spec은 없지만, 이런 방식은 프리셋 순서가 바뀌거나 개인화/A/B 테스트에 따라 구성 항목이 달라져도 이벤트 이름을 새로 만들지 않아도 된다는 점에서 합리적인 설계라고 생각합니다. 반대로 index별 또는 카드별 개별 이벤트로 쪼갰다면, 노출 순서 변경이나 구성 변경 시 schema 관리가 더 복잡해졌을 가능성이 있습니다.
+프리셋 섹션 노출(`view_customer_preset_main_page`)은 `preset_id`, `preset_name`을 배열로 한 번에 수집한다는 점에서, 개별 카드마다 이벤트를 생성하기보다 **프리셋 목록 전체를 한 이벤트로 관리하는 방식**으로 보였습니다. 이런 구조는 카드별 이벤트를 반복적으로 쌓지 않아도 되고, 프리셋 순서나 구성 변경이 생겨도 이벤트명을 다시 나누지 않아도 된다는 점에서 홈 화면 같은 개인화/실험 영역에서 비교적 효율적인 로그 설계일 수 있습니다. 내부 spec은 없지만, 만약 index별 또는 카드별 개별 이벤트로 쪼갰다면 노출 순서 변경이나 구성 변경 시 schema 관리가 더 복잡해졌을 가능성을 함께 떠올릴 수 있었습니다.
 
-반대로 개인화 타입 할당(`assign_personalization_type`)은 `type=inactive_user`, `purpose=content_personalization` 같은 값이 붙어 있어, 사용자의 직접 행동이라기보다 **홈에서 어떤 개인화 로직이 할당됐는지**를 남기는 시스템성 이벤트에 가깝다고 봤습니다.
-
-즉 첫 화면부터도 단순 홈 진입만 기록된 것이 아니라,
-**페이지 진입 / 프리셋 섹션 노출 / 실험 콘텐츠 노출 / 개인화 타입 할당**이 서로 다른 층위로 쌓인다는 점을 확인할 수 있었습니다.
+또한 `abtest_otg_818_content_display`와 개인화 타입 할당(`assign_personalization_type`)이 함께 관찰된다는 점에서, 제가 본 홈 화면 역시 실험 조건이나 개인화 로직이 반영된 하나의 버전이었을 가능성이 있습니다. 이번 raw sample에는 variant를 직접 식별할 수 있는 파라미터가 없어 확정할 수는 없지만, 다른 사용자나 다른 시점에서는 일부 다른 홈 구성이 노출되었을 가능성을 함께 열어두고 해석했습니다.
 
 다만 홈 하단에 있는 추천 카드/광고 영역은 이번 포트폴리오 핵심 흐름과 직접 연결되지 않는다고 판단해, 본문 서술에서는 제외했습니다.
 
