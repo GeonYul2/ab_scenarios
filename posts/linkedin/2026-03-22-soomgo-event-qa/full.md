@@ -107,22 +107,20 @@
 
 이번 관찰은 **게스트 상태에서 시작한 사용자 흐름**이었기 때문에, 제출 직전에 로그인 게이트가 노출됐습니다.
 
-이 구간에서 확인한 이벤트는 다음과 같습니다.
+<details>
+<summary>먼저, 이 화면에서 관찰된 이벤트 / 핵심 파라미터 보기</summary>
 
-- `view_request_sign_in_step`
-- `complete_user_sign_in`
+| Event | Observed params |
+| --- | --- |
+| `view_request_sign_in_step` | `sep_device_id`, `soomgo_session_id` |
+| `$identify` | `Member Type=user`, `Allow Push=true`, `Allow SMS=true`, `Allow Email=true` |
+| `complete_user_sign_in` | `Account Type=Kakao`, `Member Type=user`, `Login Method=manual` |
 
-특히 `view_request_sign_in_step`은 동일한 payload가 여러 번 반복되어 관찰됐습니다.  
-하지만 이것만으로 “오류다”라고 단정할 수는 없습니다.
+</details>
 
-가능한 해석은 여러 가지입니다.
+이 구간에서는 로그인 게이트 노출(`view_request_sign_in_step`)과 로그인 완료(`complete_user_sign_in`)가 차례로 관찰됐습니다. 이를 통해 숨고의 요청 퍼널은 비로그인 사용자에게 완전히 닫혀 있다기보다, **요청 제출 직전에 인증 단계를 삽입하는 구조**로 읽을 수 있었습니다.
 
-- 중복 firing
-- 화면 재렌더링
-- 정상적인 재노출
-
-그래서 이 구간은 **에러 확정**이 아니라,
-**중복/재노출 여부를 검증해볼 수 있는 QA 포인트**로 정리했습니다.
+또한 로그인 완료 직전에는 `$identify` 이벤트가 연이어 관찰되며 `Member Type=user`, `Allow Push=true` 같은 사용자 속성이 갱신됐습니다. 즉 이 구간은 단순히 로그인 버튼을 눌렀다는 사실만 남기는 것이 아니라, **게스트 상태의 사용자가 인증을 거치며 회원 상태로 전환되는 과정**까지 함께 기록하는 구간으로 볼 수 있었습니다.
 
 ---
 
