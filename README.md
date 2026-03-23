@@ -17,7 +17,3 @@
 ## 현재 문서
 - `posts/linkedin/2026-02-20-passorder/full.md`
 - `posts/linkedin/2026-03-22-soomgo-event-qa/full.md`
-
-## 로컬 전용 (Git 제외)
-- `social_posts/` : 게시 전 초안
-- `.omx/` : 로컬 도구 상태 파일
