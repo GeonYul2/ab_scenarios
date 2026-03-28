@@ -12,7 +12,7 @@
 그래서 이번 스터디에서는 접근 가능한 관찰 수단인 **Amplitude Event Explore**를 활용해,
 
 - 숨고 플랫폼 내에서 어떤 이벤트가 실제로 발생하는지
-- 어떤 파라미터가 함께 붙는지
+- 어떤 property가 함께 붙는지
 - 어떤 지점에서 QA 관점의 검증 포인트가 생기는지
 
 를 직접 정리해보는 방식으로 접근했습니다.
@@ -57,9 +57,9 @@
 이 구간에서는 홈 진입, 프리셋 섹션 노출, 실험 콘텐츠 노출, 개인화 타입 할당이 함께 관찰됐습니다.
 
 <details>
-<summary>화면에서 관찰된 이벤트 / 핵심 파라미터 보기</summary>
+<summary>화면에서 관찰된 이벤트 / 핵심 property 보기</summary>
 
-| Event | Observed params |
+| Event | Observed properties |
 | --- | --- |
 | `View Main` | `Member Type=guest`, `location=others` |
 | `view_customer_preset_main_page` | `preset_id[]`, `preset_name[]`, `user_type=guest` |
@@ -70,7 +70,7 @@
 
 프리셋 섹션 노출(`view_customer_preset_main_page`)은 `preset_id`, `preset_name`을 배열로 한 번에 수집한다는 점에서, 개별 카드마다 이벤트를 생성하기보다 **프리셋 목록 전체를 한 이벤트로 관리하는 방식**으로 판단됩니다. 이런 구조는 카드별 이벤트를 반복적으로 쌓지 않아도 되고, 프리셋 순서와 같은 변경사항이 생겨도 이벤트명을 다시 나누지 않아도 된다는 점에서 효율적인 로그 설계라고 생각합니다. 만약 index별 또는 카드별 개별 이벤트로 쪼갰다면 노출 순서 변경이나 구성 변경 시 schema 관리가 더 복잡해졌을 가능성을 함께 떠올릴 수 있었습니다.
 
-또한 `abtest_otg_818_content_display`와 개인화 타입 할당(`assign_personalization_type`)이 함께 관찰된다는 점에서, 제가 본 홈 화면 역시 실험 조건이나 개인화 로직이 반영된 하나의 버전이었을 가능성이 있습니다. 이번 raw sample에는 variant를 직접 식별할 수 있는 파라미터가 없어 확정할 수는 없지만, 다른 사용자나 다른 시점에서는 일부 다른 홈 구성이 노출되었을 가능성을 함께 열어두고 해석했습니다.
+또한 `abtest_otg_818_content_display`와 개인화 타입 할당(`assign_personalization_type`)이 함께 관찰된다는 점에서, 제가 본 홈 화면 역시 실험 조건이나 개인화 로직이 반영된 하나의 버전이었을 가능성이 있습니다. 이번 raw sample에는 variant를 직접 식별할 수 있는 property가 없어 확정할 수는 없지만, 다른 사용자나 다른 시점에서는 일부 다른 홈 구성이 노출되었을 가능성을 함께 열어두고 해석했습니다.
 
 다만 홈 하단에 있는 추천 카드/광고 영역은 이번 포트폴리오 핵심 흐름과 직접 연결되지 않는다고 판단해, 본문 서술에서는 제외했습니다.
 
@@ -85,9 +85,9 @@
 취업 준비 프리셋에 진입한 뒤, 사용자는 세부 서비스 중 **스피치 컨설팅**을 선택해 요청폼으로 들어가게 됩니다.
 
 <details>
-<summary>화면에서 관찰된 이벤트 / 핵심 파라미터 보기</summary>
+<summary>화면에서 관찰된 이벤트 / 핵심 property 보기</summary>
 
-| Event | Observed params |
+| Event | Observed properties |
 | --- | --- |
 | `customer_total_request_open` | `preset_id=취업 준비`, `preset_name=취업 준비`, `service_count=8`, `total_request_type=preset`, `location=customer_main_page_click_preset_carousel_item` |
 | `Start Request Form` | `Form ID`, `Service ID=404`, `Service Name=스피치 컨설팅`, `requestServiceId[]`, `content_category[]`, `content_ids=404`, `form_type=chat_request` |
@@ -108,9 +108,9 @@
 이번 관찰은 **게스트 상태에서 시작한 사용자 흐름**이었기 때문에, 제출 직전에 로그인 게이트가 노출됐습니다.
 
 <details>
-<summary>화면에서 관찰된 이벤트 / 핵심 파라미터 보기</summary>
+<summary>화면에서 관찰된 이벤트 / 핵심 property 보기</summary>
 
-| Event | Observed params |
+| Event | Observed properties |
 | --- | --- |
 | `view_request_sign_in_step` | `sep_device_id`, `soomgo_session_id` |
 | `$identify` | `Member Type=user`, `Allow Push=true`, `Allow SMS=true`, `Allow Email=true` |
@@ -131,9 +131,9 @@
 요청 제출 이후에는 받은 견적으로 바로 넘어가기 전, 알람 동의 화면이 한 번 더 나타났습니다.
 
 <details>
-<summary>관찰 이벤트 / 핵심 파라미터</summary>
+<summary>관찰 이벤트 / 핵심 property</summary>
 
-| Event | Observed params |
+| Event | Observed properties |
 | --- | --- |
 | `customer_info_input_start` | `location=request`, `sep_device_id`, `soomgo_session_id` |
 
@@ -152,16 +152,16 @@
 제출 이후 전환 구간을 지나면, 사용자는 받은 견적 영역으로 이어지게 됩니다.
 
 <details>
-<summary>관찰 이벤트 / 핵심 파라미터</summary>
+<summary>관찰 이벤트 / 핵심 property</summary>
 
-| Event | Observed params |
+| Event | Observed properties |
 | --- | --- |
 | `view_received_quote_list_page` | `service_id`, `service_name`, `request_id`, `category_name`, `location=requested` |
 | `customer_landing_im` | `service_id`, `service_name`, `request_id` |
 
 </details>
 
-이 구간에서는 `view_received_quote_list_page`와 `customer_landing_im`이 연달아 관찰됐고, 두 이벤트 모두 같은 `request_id`, `service_id`, `service_name`을 공유했습니다. 이번 샘플만 놓고 보면 `customer_landing_im`의 파라미터는 `view_received_quote_list_page`의 핵심 식별 정보와 크게 다르지 않아, 이 구간은 **이벤트 통합 또는 역할 재정의가 필요한 후보 포인트**로 정리할 수 있었습니다.
+이 구간에서는 `view_received_quote_list_page`와 `customer_landing_im`이 연달아 관찰됐고, 두 이벤트 모두 같은 `request_id`, `service_id`, `service_name`을 공유했습니다. 이번 샘플만 놓고 보면 `customer_landing_im`의 property는 `view_received_quote_list_page`의 핵심 식별 정보와 크게 다르지 않아, 이 구간은 **이벤트 통합 또는 역할 재정의가 필요한 후보 포인트**로 정리할 수 있었습니다.
 
 ---
 
@@ -173,15 +173,15 @@
 
 #### 4-2. '받은 견적' 진입 이벤트는 통합 검토 후보 _(관련 구간: 3-5)_
 
-`view_received_quote_list_page`와 `customer_landing_im`은 같은 `request_id`, `service_id`, `service_name`을 공유했고, 파라미터 구조도 매우 유사했습니다. 따라서 이 구간은 **이벤트 통합 또는 역할 재정의가 필요한 후보 포인트**로 제시할 수 있었습니다.
+`view_received_quote_list_page`와 `customer_landing_im`은 같은 `request_id`, `service_id`, `service_name`을 공유했고, property 구조도 매우 유사했습니다. 따라서 이 구간은 **이벤트 통합 또는 역할 재정의가 필요한 후보 포인트**로 제시할 수 있었습니다.
 
 #### 4-3. 알람 동의 화면의 후속 액션은 추가 확인이 필요하다 _(관련 구간: 3-4)_
 
 `customer_info_input_start`를 통해 알람 동의 화면의 시작은 확인할 수 있었지만, 사용자가 `동의하고 맞춤 콘텐츠 알림 받기`를 눌렀는지 `나중에 받기`를 눌렀는지까지 설명하는 후속 이벤트는 이번 관찰 데이터에서는 확인되지 않았습니다. 따라서 이 구간은 **버튼별 후속 액션이 실제로 어떻게 계측되는지 추가 확인이 필요한 포인트**로 남았습니다.
 
-#### 4-4. 파라미터 명명 규칙은 표준화 여지 존재 _(관련 구간: 3-1, 3-2, 3-5)_
+#### 4-4. property 명명 규칙은 표준화 여지 존재 _(관련 구간: 3-1, 3-2, 3-5)_
 
-관찰 과정에서는 `Member Type`과 `user_type`, `Service ID`와 `service_id`/`serviceId`처럼 같은 의미로 보이지만 표기 규칙이 다른 필드들이 함께 나타났습니다. 이런 차이는 raw를 읽는 단계에서는 큰 문제가 아니더라도, 이후 tracking plan 정리나 SQL 기반 검증 단계에서는 혼선을 만들 수 있습니다. 따라서 이 부분은 **파라미터 명명 표준화가 필요한 포인트**로 남았습니다.
+관찰 과정에서는 `Member Type`과 `user_type`, `Service ID`와 `service_id`/`serviceId`처럼 같은 의미로 보이지만 표기 규칙이 다른 필드들이 함께 나타났습니다. 이런 차이는 raw를 읽는 단계에서는 큰 문제가 아니더라도, 이후 tracking plan 정리나 SQL 기반 검증 단계에서는 혼선을 만들 수 있습니다. 따라서 이 부분은 **property 명명 표준화가 필요한 포인트**로 남았습니다.
 
 ---
 
@@ -195,7 +195,7 @@
 
 핵심은 사용자가 실제로 선택하거나 입력한 값이 `click_request_form_step_next_button`에 단계별로 정확히 남는지 확인하는 것입니다.
 
-- 주요 이벤트/파라미터: `click_request_form_step_next_button`, `request_form_id`, `step_index`, `step_type`, `selected_answer`, `is_last_step`
+- 주요 이벤트/property: `click_request_form_step_next_button`, `request_form_id`, `step_index`, `step_type`, `selected_answer`, `is_last_step`
 - 검증 방법: 동일 `request_form_id` 기준으로 step 이벤트를 시간순 정렬한 뒤, 화면에서 입력한 값과 `selected_answer`가 일치하는지 비교하고, 마지막 단계에서 `is_last_step=true`가 정상 기재되는지 확인합니다.
 
 #### 5-2. 선택한 서비스 맥락이 폼 시작부터 제출까지 일관되게 유지되는지
@@ -204,7 +204,7 @@
 
 핵심은 사용자가 처음 선택한 서비스가 폼 시작, step 진행, 제출 시점까지 동일한 맥락으로 유지되는지 확인하는 것입니다.
 
-- 주요 이벤트/파라미터: `Start Request Form`, `click_request_form_step_next_button`, `Submit Request`, `Service ID`, `Service Name`, `service_id`, `service_name`, `requestServiceId`, `content_category`, `request_form_id`
+- 주요 이벤트/property: `Start Request Form`, `click_request_form_step_next_button`, `Submit Request`, `Service ID`, `Service Name`, `service_id`, `service_name`, `requestServiceId`, `content_category`, `request_form_id`
 - 검증 방법: 동일 `request_form_id`를 기준으로 폼 시작 이벤트와 step 이벤트를 묶고, 최종 `Submit Request`의 `service_id` 및 `service_name`이 같은 서비스 맥락을 가리키는지 비교합니다.
 
 #### 5-3. 마지막 입력 이후 제출 이벤트가 정상적으로 기재되는지
@@ -213,7 +213,7 @@
 
 핵심은 폼 입력이 완료된 뒤 실제 제출 이벤트가 빠짐없이 생성되고, 제출 결과를 식별할 수 있는 값이 함께 남는지 확인하는 것입니다.
 
-- 주요 이벤트/파라미터: `click_request_form_step_next_button`, `send_request_finished`, `Submit Request`, `is_last_step`, `request_id`, `service_id`, `requestSendServiceId`
+- 주요 이벤트/property: `click_request_form_step_next_button`, `send_request_finished`, `Submit Request`, `is_last_step`, `request_id`, `service_id`, `requestSendServiceId`
 - 검증 방법: `is_last_step=true`가 기록된 이후 `send_request_finished`와 `Submit Request`가 이어지는지 확인하고, `Submit Request`에 `request_id`가 정상 기재되는지 비교합니다.
 
 #### 5-4. 비로그인 사용자가 로그인 후에도 같은 요청 흐름으로 복귀하는지
@@ -222,7 +222,7 @@
 
 핵심은 게스트 상태에서 시작한 사용자가 로그인 단계를 거친 뒤에도, 이전에 작성하던 요청 흐름이 끊기지 않고 제출까지 이어지는지 확인하는 것입니다.
 
-- 주요 이벤트/파라미터: `view_request_sign_in_step`, `complete_user_sign_in`, `soomgo_session_id`, `sep_device_id`, `request_form_id`
+- 주요 이벤트/property: `view_request_sign_in_step`, `complete_user_sign_in`, `soomgo_session_id`, `sep_device_id`, `request_form_id`
 - 검증 방법: 동일 `soomgo_session_id`, `sep_device_id` 기준으로 로그인 게이트 노출 이후 로그인 완료, 이후 제출 이벤트가 같은 흐름 안에서 이어지는지 확인하고, 로그인 전후 폼 맥락이 유지되는지 비교합니다.
 
 #### 5-5. 제출 이후 받은 견적 진입이 같은 request로 연결되는지
@@ -231,7 +231,7 @@
 
 핵심은 제출된 요청이 실제로 받은 견적 화면까지 이어지고, 그 후속 이벤트가 같은 request 맥락 안에서 연결되는지 확인하는 것입니다.
 
-- 주요 이벤트/파라미터: `Submit Request`, `view_received_quote_list_page`, `customer_landing_im`, `request_id`, `service_id`, `service_name`
+- 주요 이벤트/property: `Submit Request`, `view_received_quote_list_page`, `customer_landing_im`, `request_id`, `service_id`, `service_name`
 - 검증 방법: `Submit Request.request_id`를 기준으로 후속 이벤트를 연결해 `view_received_quote_list_page`와 `customer_landing_im`이 같은 request에 기재되는지 비교합니다.
 
 ---
