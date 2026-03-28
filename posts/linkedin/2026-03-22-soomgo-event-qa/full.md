@@ -124,7 +124,34 @@
 
 ---
 
-### 3-4. 제출 후 알람 동의 화면
+### 3-4. 마지막 step 완료 후 제출 이벤트 발생
+
+> 이 구간은 마지막 step(진행률 100%) 화면과 raw event를 함께 보며 해석했습니다.
+
+요청폼 마지막 단계에서는 사용자가 최종 답변을 입력한 뒤 `1개 서비스 무료견적 받기` 버튼을 누를 수 있었습니다. raw event 기준으로는 이 직전 마지막 step 이벤트와, 그 직후의 제출 관련 이벤트들이 연속해서 관찰됐습니다.
+
+<details>
+<summary>관찰 이벤트 / 핵심 property</summary>
+
+| Event | Observed properties |
+| --- | --- |
+| `click_request_form_step_next_button` | `request_form_id`, `step_index=10`, `is_last_step=true`, `selected_answer`, `service_id`, `service_name` |
+| `send_request_finished` | `requestSendServiceId[]`, `sep_device_id`, `soomgo_session_id` |
+| `Submit Request` | `request_id`, `service_id`, `service_name`, `content_category`, `request_type`, `form_type`, `sep_device_id`, `soomgo_session_id` |
+
+</details>
+
+raw log를 시간순으로 보면 마지막 `click_request_form_step_next_button`에서 `is_last_step=true`가 기록된 뒤, `send_request_finished`와 `Submit Request`가 수십 ms 간격으로 이어졌습니다. 이 흐름을 통해 적어도 이번 sample에서는 **마지막 step 완료 → 제출 처리 → 실제 request 생성**이라는 순서를 읽을 수 있었습니다.
+
+여기서 중요한 점은 `request_form_id`와 `request_id`의 역할이 달라 보인다는 것입니다. `request_form_id`는 마지막 step까지 유지되며 작성 중인 폼 흐름을 식별하는 값으로 보였고, `request_id`는 `Submit Request` 시점에 처음 등장하며 제출 후 실제 생성된 request를 식별하는 값으로 보였습니다.
+
+다만 현재 sample에서는 `request_form_id`와 `request_id`를 직접 이어주는 공통 property는 확인되지 않았습니다. 대신 이번 관찰에서는 같은 `sep_device_id`, 같은 `soomgo_session_id`, 같은 `service_id`/`service_name`, 그리고 매우 짧은 시간 간격을 근거로 하나의 요청 흐름이라고 해석했습니다. 따라서 **이 둘의 직접 매핑은 확인하지 못했고, 이번 sample에 한해 session/device/time continuity로 연결을 추정했다**고 보는 것이 가장 안전합니다.
+
+또한 이 sample 하나만으로 “항상 같은 session/device 상태로 제출까지 이어진다”고 일반화할 수는 없습니다. 다중 탭, 세션 재개, 로그인 이후 재진입 같은 예외 케이스는 추가 sample 확인이 필요합니다.
+
+---
+
+### 3-5. 제출 후 알람 동의 화면
 
 <img src="./assets/04_consent.png" alt="알람 동의 화면" width="900" />
 
@@ -145,7 +172,7 @@
 
 ---
 
-### 3-5. 받은 견적 화면 진입
+### 3-6. 받은 견적 화면 진입
 
 <img src="./assets/05_received_quotes.png" alt="도착 견적 화면" width="900" />
 
@@ -167,19 +194,23 @@
 
 ## 4. 관찰을 통해 도출한 개선 포인트
 
-#### 4-1. 제출 이벤트 쌍의 존재 이유는 더 명확해질 필요가 있다 _(관련 구간: 3-4)_
+#### 4-1. 제출 직전-직후 식별자 연결은 더 명확해질 필요가 있다 _(관련 구간: 3-4)_
 
-`send_request_finished`와 `Submit Request`는 서비스 단위로 짝을 이루며 연속해서 관찰됐습니다. **왜 한 서비스 요청 안에 두 이벤트가 함께 필요한지**는 이번 관찰만으로 충분히 설명되지 않았습니다. 따라서 이 구간은 제출 이벤트의 역할을 더 선명하게 나누거나, 필요하다면 통합 여부까지 검토할 수 있는 포인트로 남았습니다.
+이번 sample에서는 마지막 step의 `request_form_id`와 `Submit Request`의 `request_id`를 직접 이어주는 공통 property가 보이지 않았습니다. 따라서 현재는 같은 `sep_device_id`, 같은 `soomgo_session_id`, 같은 서비스 맥락, 그리고 시간적 연속성을 근거로 하나의 흐름이라고 해석하고 있습니다. 실무적으로는 submit 시점에 `request_form_id`를 함께 남기거나 별도 mapping event를 두면 pre-submit과 post-submit을 더 안정적으로 연결할 수 있을 것으로 보였습니다.
 
-#### 4-2. '받은 견적' 진입 이벤트는 통합 검토 후보 _(관련 구간: 3-5)_
+#### 4-2. 제출 이벤트 쌍의 역할은 더 명확해질 필요가 있다 _(관련 구간: 3-4)_
+
+`send_request_finished`와 `Submit Request`는 서비스 단위로 짝을 이루며 연속해서 관찰됐습니다. 다만 전자는 `request_id` 없이 제출 완료 액션만 남기고, 후자는 `request_id`와 함께 실제 request 생성 결과를 남기는 구조처럼 보였습니다. 왜 두 이벤트가 모두 필요한지, 각각 어떤 owner와 downstream 목적을 가지는지는 이번 관찰만으로 충분히 설명되지 않았습니다. 따라서 이 구간은 제출 이벤트의 역할을 더 선명하게 나누거나, 필요하다면 통합 여부까지 검토할 수 있는 포인트로 남았습니다.
+
+#### 4-3. '받은 견적' 진입 이벤트는 통합 검토 후보 _(관련 구간: 3-6)_
 
 `view_received_quote_list_page`와 `customer_landing_im`은 같은 `request_id`, `service_id`, `service_name`을 공유했고, property 구조도 매우 유사했습니다. 따라서 이 구간은 **이벤트 통합 또는 역할 재정의가 필요한 후보 포인트**로 제시할 수 있었습니다.
 
-#### 4-3. 알람 동의 화면의 후속 액션은 추가 확인이 필요하다 _(관련 구간: 3-4)_
+#### 4-4. 알람 동의 화면의 후속 액션은 추가 확인이 필요하다 _(관련 구간: 3-5)_
 
 `customer_info_input_start`를 통해 알람 동의 화면의 시작은 확인할 수 있었지만, 사용자가 `동의하고 맞춤 콘텐츠 알림 받기`를 눌렀는지 `나중에 받기`를 눌렀는지까지 설명하는 후속 이벤트는 이번 관찰 데이터에서는 확인되지 않았습니다. 따라서 이 구간은 **버튼별 후속 액션이 실제로 어떻게 계측되는지 추가 확인이 필요한 포인트**로 남았습니다.
 
-#### 4-4. property 명명 규칙은 표준화 여지 존재 _(관련 구간: 3-1, 3-2, 3-5)_
+#### 4-5. property 명명 규칙은 표준화 여지 존재 _(관련 구간: 3-1, 3-2, 3-4, 3-6)_
 
 관찰 과정에서는 `Member Type`과 `user_type`, `Service ID`와 `service_id`/`serviceId`처럼 같은 의미로 보이지만 표기 규칙이 다른 필드들이 함께 나타났습니다. 이런 차이는 raw를 읽는 단계에서는 큰 문제가 아니더라도, 이후 tracking plan 정리나 SQL 기반 검증 단계에서는 혼선을 만들 수 있습니다. 따라서 이 부분은 **property 명명 표준화가 필요한 포인트**로 남았습니다.
 
@@ -205,7 +236,7 @@
 핵심은 사용자가 처음 선택한 서비스가 폼 시작, step 진행, 제출 시점까지 동일한 맥락으로 유지되는지 확인하는 것입니다.
 
 - 주요 이벤트/property: `Start Request Form`, `click_request_form_step_next_button`, `Submit Request`, `Service ID`, `Service Name`, `service_id`, `service_name`, `requestServiceId`, `content_category`, `request_form_id`
-- 검증 방법: 동일 `request_form_id`를 기준으로 폼 시작 이벤트와 step 이벤트를 묶고, 최종 `Submit Request`의 `service_id` 및 `service_name`이 같은 서비스 맥락을 가리키는지 비교합니다.
+- 검증 방법: 동일 `request_form_id`를 기준으로 폼 시작 이벤트와 step 이벤트를 묶고, 마지막 step 이후 같은 session/device/service context에서 발생한 `Submit Request`의 `service_id` 및 `service_name`이 같은 서비스 맥락을 가리키는지 비교합니다.
 
 #### 5-3. 마지막 입력 이후 제출 이벤트가 정상적으로 기재되는지
 
@@ -214,7 +245,7 @@
 핵심은 폼 입력이 완료된 뒤 실제 제출 이벤트가 빠짐없이 생성되고, 제출 결과를 식별할 수 있는 값이 함께 남는지 확인하는 것입니다.
 
 - 주요 이벤트/property: `click_request_form_step_next_button`, `send_request_finished`, `Submit Request`, `is_last_step`, `request_id`, `service_id`, `requestSendServiceId`
-- 검증 방법: `is_last_step=true`가 기록된 이후 `send_request_finished`와 `Submit Request`가 이어지는지 확인하고, `Submit Request`에 `request_id`가 정상 기재되는지 비교합니다.
+- 검증 방법: `is_last_step=true`가 기록된 이후 `send_request_finished`와 `Submit Request`가 이어지는지 확인하고, 현재 sample에서는 같은 session/device/service context 안에서 `Submit Request`에 `request_id`가 정상 기재되는지 비교합니다.
 
 #### 5-4. 비로그인 사용자가 로그인 후에도 같은 요청 흐름으로 복귀하는지
 
@@ -227,7 +258,7 @@
 
 #### 5-5. 제출 이후 받은 견적 진입이 같은 request로 연결되는지
 
-관련 구간: 3-5
+관련 구간: 3-6
 
 핵심은 제출된 요청이 실제로 받은 견적 화면까지 이어지고, 그 후속 이벤트가 같은 request 맥락 안에서 연결되는지 확인하는 것입니다.
 
