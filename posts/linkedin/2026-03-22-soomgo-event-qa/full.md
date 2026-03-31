@@ -255,7 +255,7 @@ row 기준으로 보면 비슷한 의미의 값이 아래처럼 서로 다른 �
 
 ## 5. 실제 QA에서 검증할 로그 적재 포인트
 
-이 흐름의 QA는 **지금 sample로 직접 검증 가능한 것**과 **추가 확인이 필요하지만, 계측이 보완되면 더 명확해지는 것**으로 나눠서 보는 편이 명확합니다.
+이 흐름의 QA는 **지금 sample로 직접 검증 가능한 것**만 먼저 고정하고, 나머지는 **식별자가 보강되면 추가로 해볼 수 있는 제안**으로 분리하는 편이 더 명확하다고 봤습니다.
 
 ### 5-1. 현재 sample만으로 직접 검증 가능한 QA
 
@@ -275,32 +275,27 @@ row 기준으로 보면 비슷한 의미의 값이 아래처럼 서로 다른 �
 - 기준: `Service ID/service_id/serviceId`, `Service Name/service_name/serviceName`, `requestServiceId[]/requestSendServiceId[]/content_category[]`
 - 체크: 비교 기준으로 맞췄을 때 null 없이 같은 의미로 읽히는지
 
-### 5-2. 추가 확인이 필요하지만, 계측이 보완되면 더 명확해지는 QA
+### 5-2. 식별자가 보강되면 추가로 해볼 수 있는 QA 제안
 
-#### 5-2-1. 로그인 게이트 이후 원래 요청 흐름으로 복귀하는지
-- 현재 sample: `view_request_sign_in_step` → `complete_user_sign_in` → `send_request_finished` → `Submit Request` 순서가 보임
-- 연결 기준: `soomgo_session_id`, `sep_device_id`
-- 체크: sign-in 이후 submit까지 같은 흐름으로 이어지는지
-- 보완 제안: `Submit Request`에도 `request_form_id`를 남기면 더 명확해짐
+#### 5-2-1. 마지막 step과 실제 submit을 직접 연결하는 QA
+- 현재 한계: `request_form_id`는 마지막 step까지 보이고, `request_id`는 `Submit Request`에서 처음 보임
+- 제안: `Submit Request`에도 `request_form_id`를 남김
+- 가능해지는 체크: 마지막 step 이후 `send_request_finished`, `Submit Request`가 같은 form 흐름에서 이어지는지 직접 검증 가능
 
-#### 5-2-2. 마지막 step 이후에도 같은 서비스 카테고리로 제출되는지
-- 현재 sample:
-  - `Start Request Form.requestServiceId[] = ['c1-29','c2-29','404']`
-  - `click_request_form_step_next_button.content_category[] = ['c1-29','c2-29','404']`
-  - `send_request_finished.requestSendServiceId[] = ['c1-29','c2-29','404']`
-  - `Submit Request.content_category[] = ['c1-29','c2-29','404']`
-- 체크: 제출 경계에서도 서비스 path가 바뀌지 않는지
-- 보완 제안: `send_request_finished` 또는 `Submit Request`에 `request_form_id`가 함께 있으면 더 확실해짐
+#### 5-2-2. 로그인 게이트 이후 원래 요청 흐름으로 복귀하는지 보는 QA
+- 현재 한계: 지금은 `soomgo_session_id`, `sep_device_id`로만 간접 확인 가능
+- 제안: 로그인 이후 이벤트에도 같은 form-level 식별자를 유지
+- 가능해지는 체크: `view_request_sign_in_step` 이후 `complete_user_sign_in`, `Submit Request`가 같은 요청 흐름으로 복귀하는지 직접 검증 가능
 
-#### 5-2-3. 제출 이후 후속 화면과 받은 견적 진입이 이어지는지
-- 현재 sample: `Submit Request` 뒤 `customer_info_input_start`는 같은 `soomgo_session_id`, `sep_device_id`로 읽히고, 이후 `view_received_quote_list_page`, `customer_landing_im`은 같은 `request_id`를 가짐
-- 체크: 후속 화면 진입과 request 단위 continuity가 모두 유지되는지
-- 보완 제안: `customer_info_input_start`에도 `request_id`를 남기면 더 명확해짐
+#### 5-2-3. 제출 이후 후속 화면 진입을 request 단위로 보는 QA
+- 현재 한계: `customer_info_input_start`에는 `request_id`가 보이지 않음
+- 제안: `customer_info_input_start`에도 `request_id`를 남김
+- 가능해지는 체크: `Submit Request` 이후 후속 화면 진입과 받은 견적 진입을 같은 request로 직접 연결 가능
 
-#### 5-2-4. 사용자 응답이 최종 결과까지 반영되는지
-- 현재 sample에서 직접 확인 가능한 것: 응답이 `selected_answer`에 남는지
-- 아직 확인이 어려운 것: 응답이 최종 request payload와 후속 결과에 어떻게 반영됐는지
-- 보완 제안: submit 이후에도 답변 반영 결과를 추적할 수 있는 필드가 있으면 좋음
+#### 5-2-4. 사용자 응답이 최종 결과까지 반영됐는지 보는 QA
+- 현재 한계: `selected_answer`는 보이지만, submit 이후 결과 테이블과 직접 연결되는 값은 보이지 않음
+- 제안: request 생성 시 답변 snapshot 또는 answer-to-request mapping 필드를 남김
+- 가능해지는 체크: 사용자가 입력한 응답이 최종 request payload와 후속 결과에 제대로 반영됐는지 검증 가능
 
 ---
 
