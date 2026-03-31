@@ -255,7 +255,7 @@ row 기준으로 보면 비슷한 의미의 값이 아래처럼 서로 다른 �
 
 ## 5. 실제 QA에서 검증할 로그 적재 포인트
 
-이 흐름의 QA는 **직접 검증 가능한 구간**, **추가 확인이 필요한 구간**, **제안이 필요한 구간**으로 나눠서 보는 편이 명확합니다.
+이 흐름의 QA는 **지금 sample로 직접 검증 가능한 것**과 **추가 확인이 필요하지만, 계측이 보완되면 더 명확해지는 것**으로 나눠서 보는 편이 명확합니다.
 
 ### 5-1. 현재 sample만으로 직접 검증 가능한 QA
 
@@ -267,45 +267,40 @@ row 기준으로 보면 비슷한 의미의 값이 아래처럼 서로 다른 �
 - 기준: `click_request_form_step_next_button.selected_answer`
 - 체크: 화면에서 입력한 값이 `selected_answer`에 누락 없이 남는지
 
-#### 5-1-3. 서비스 맥락이 pre-submit 구간에서 유지되는지
-- 기준: `Service ID/service_id`, `Service Name/service_name`, `requestServiceId[]/content_category[]`
-- 체크: form 시작 row와 step row가 모두 `404 / 스피치 컨설팅 / ['c1-29','c2-29','404']` 맥락을 유지하는지
+#### 5-1-3. 서비스 맥락이 시작부터 중간 단계까지 유지되는지
+- 기준: `Start Request Form.Service ID`, `Service Name`, `requestServiceId[]`, `content_category[]`; `click_request_form_step_next_button.service_id`, `service_name`, `content_category[]`
+- 체크: 시작 row와 step row가 모두 `404 / 스피치 컨설팅 / ['c1-29','c2-29','404']` 맥락을 유지하는지
 
-#### 5-1-4. 같은 의미의 property가 일관되게 해석되는지
+#### 5-1-4. 같은 의미의 property가 같은 기준으로 읽히는지
 - 기준: `Service ID/service_id/serviceId`, `Service Name/service_name/serviceName`, `requestServiceId[]/requestSendServiceId[]/content_category[]`
-- 체크: canonical 기준으로 변환했을 때 null 없이 같은 의미로 읽히는지
+- 체크: 비교 기준으로 맞췄을 때 null 없이 같은 의미로 읽히는지
 
-### 5-2. 연속적으로 읽히지만 추가 확인이 필요한 QA
+### 5-2. 추가 확인이 필요하지만, 계측이 보완되면 더 명확해지는 QA
 
 #### 5-2-1. 로그인 게이트 이후 원래 요청 흐름으로 복귀하는지
-- 기준: `view_request_sign_in_step` → `complete_user_sign_in` → `send_request_finished` → `Submit Request`
-- 연결: `soomgo_session_id`, `sep_device_id`
+- 현재 sample: `view_request_sign_in_step` → `complete_user_sign_in` → `send_request_finished` → `Submit Request` 순서가 보임
+- 연결 기준: `soomgo_session_id`, `sep_device_id`
 - 체크: sign-in 이후 submit까지 같은 흐름으로 이어지는지
+- 보완 제안: `Submit Request`에도 `request_form_id`를 남기면 더 명확해짐
 
-#### 5-2-2. 마지막 step 이후 submit boundary가 잘 이어지는지
-- 기준: 마지막 `click_request_form_step_next_button` 이후 `send_request_finished`, `Submit Request`
-- 연결: `soomgo_session_id`, `sep_device_id`
-- 체크: 순서가 끊기지 않는지, `Submit Request`에 `request_id`가 남는지
-- 한계: `request_form_id`와 `request_id`를 직접 잇는 property는 이번 sample에서 보이지 않음
+#### 5-2-2. 마지막 step 이후에도 같은 서비스 카테고리로 제출되는지
+- 현재 sample:
+  - `Start Request Form.requestServiceId[] = ['c1-29','c2-29','404']`
+  - `click_request_form_step_next_button.content_category[] = ['c1-29','c2-29','404']`
+  - `send_request_finished.requestSendServiceId[] = ['c1-29','c2-29','404']`
+  - `Submit Request.content_category[] = ['c1-29','c2-29','404']`
+- 체크: 제출 경계에서도 서비스 path가 바뀌지 않는지
+- 보완 제안: `send_request_finished` 또는 `Submit Request`에 `request_form_id`가 함께 있으면 더 확실해짐
 
 #### 5-2-3. 제출 이후 후속 화면과 받은 견적 진입이 이어지는지
-- 기준: `Submit Request` → `customer_info_input_start` → `view_received_quote_list_page` / `customer_landing_im`
-- 연결: `customer_info_input_start`는 `soomgo_session_id`, `sep_device_id`; 받은 견적 진입은 `request_id`
+- 현재 sample: `Submit Request` 뒤 `customer_info_input_start`는 같은 `soomgo_session_id`, `sep_device_id`로 읽히고, 이후 `view_received_quote_list_page`, `customer_landing_im`은 같은 `request_id`를 가짐
 - 체크: 후속 화면 진입과 request 단위 continuity가 모두 유지되는지
+- 보완 제안: `customer_info_input_start`에도 `request_id`를 남기면 더 명확해짐
 
-### 5-3. 실무적으로 추가되면 좋은 제안형 QA
-
-#### 5-3-1. submit 경계 식별자 보강
-- 제안: `Submit Request`에도 `request_form_id`를 남김
-- 이유: pre-submit과 post-submit을 직접 연결하기 쉬워짐
-
-#### 5-3-2. post-submit 식별자 보강
-- 제안: `customer_info_input_start`에도 `request_id`를 남김
-- 이유: 후속 화면 진입을 request 단위로 바로 검증할 수 있음
-
-#### 5-3-3. 응답-결과 반영 QA 보강
-- 현재 가능한 것: 응답이 `selected_answer`에 남는지 확인
-- 추가로 필요한 것: 응답이 최종 request payload와 후속 결과에 어떻게 반영됐는지 검증할 필드
+#### 5-2-4. 사용자 응답이 최종 결과까지 반영되는지
+- 현재 sample에서 직접 확인 가능한 것: 응답이 `selected_answer`에 남는지
+- 아직 확인이 어려운 것: 응답이 최종 request payload와 후속 결과에 어떻게 반영됐는지
+- 보완 제안: submit 이후에도 답변 반영 결과를 추적할 수 있는 필드가 있으면 좋음
 
 ---
 
