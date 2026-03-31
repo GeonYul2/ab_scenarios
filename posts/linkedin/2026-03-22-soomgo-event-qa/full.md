@@ -194,27 +194,66 @@ raw log를 시간순으로 보면 마지막 `click_request_form_step_next_button
 
 ---
 
-## 4. 관찰을 통해 도출한 개선 포인트
+## 4. 관찰을 통해 추가로 확인하고 싶은 포인트
 
-#### 4-1. 제출 직전-직후 식별자 연결은 더 명확해질 필요가 있다 _(관련 구간: 3-4)_
+#### 4-1. 제출 구간에서는 `request_form_id`에서 `request_id`로 넘어가는 연결 기준이 더 궁금했다 _(관련 구간: 3-4)_
 
-이번 sample에서는 마지막 step의 `request_form_id`와 `Submit Request`의 `request_id`를 직접 이어주는 공통 property가 보이지 않았습니다. 따라서 현재는 같은 `sep_device_id`, 같은 `soomgo_session_id`, 같은 서비스 맥락, 그리고 시간적 연속성을 근거로 하나의 흐름이라고 해석하고 있습니다. 실무적으로는 submit 시점에 `request_form_id`를 함께 남기거나 별도 mapping event를 두면 pre-submit과 post-submit을 더 안정적으로 연결할 수 있을 것으로 보였습니다.
+제출 직전/직후 구간에서 관찰한 핵심 row는 아래와 같았습니다.
 
-#### 4-2. 제출 이벤트 쌍의 역할은 더 명확해질 필요가 있다 _(관련 구간: 3-4)_
+- `click_request_form_step_next_button`
+  - `request_form_id`, `step_index`, `is_last_step`, `selected_answer`
+- `send_request_finished`
+  - `requestSendServiceId`, `sep_device_id`, `soomgo_session_id`
+- `Submit Request`
+  - `request_id`, `Service ID`, `Service Name`, `content_category`, `content_ids`, `Location`, `sep_device_id`, `soomgo_session_id`
 
-`send_request_finished`와 `Submit Request`는 서비스 단위로 짝을 이루며 연속해서 관찰됐습니다. 다만 전자는 `request_id` 없이 제출 완료 액션만 남기고, 후자는 `request_id`와 함께 실제 request 생성 결과를 남기는 구조처럼 보였습니다. 왜 두 이벤트가 모두 필요한지, 각각 어떤 owner와 downstream 목적을 가지는지는 이번 관찰만으로 충분히 설명되지 않았습니다. 따라서 이 구간은 제출 이벤트의 역할을 더 선명하게 나누거나, 필요하다면 통합 여부까지 검토할 수 있는 포인트로 남았습니다.
+여기서 마지막 step 이벤트까지는 `request_form_id`로 흐름을 읽을 수 있었지만, `Submit Request`에서는 `request_id`가 등장했고, 그 사이의 `send_request_finished`에는 `request_form_id`도 `request_id`도 직접 보이지 않았습니다.
 
-#### 4-3. '받은 견적' 진입 이벤트는 통합 검토 후보 _(관련 구간: 3-6)_
+그래서 이 구간을 보며, 실무에서는 **`request_form_id`와 `request_id`를 어떤 기준으로 연결하는지**, 그리고 그 연결을 **`soomgo_session_id`나 `sep_device_id` 같은 session/device 기반으로 매핑하는지**, 아니면 별도의 내부 기준이 있는지가 궁금했습니다.
 
-`view_received_quote_list_page`와 `customer_landing_im`은 같은 `request_id`, `service_id`, `service_name`을 공유했고, property 구조도 매우 유사했습니다. 따라서 이 구간은 **이벤트 통합 또는 역할 재정의가 필요한 후보 포인트**로 제시할 수 있었습니다.
+#### 4-2. 받은 견적 진입 구간에서는 왜 두 이벤트로 나뉘는지가 궁금했다 _(관련 구간: 3-6)_
 
-#### 4-4. 알람 동의 화면의 후속 액션은 추가 확인이 필요하다 _(관련 구간: 3-5)_
+받은 견적 진입 직후에는 아래 두 row가 거의 연속해서 관찰됐습니다.
 
-`customer_info_input_start`를 통해 알람 동의 화면의 시작은 확인할 수 있었지만, 사용자가 `동의하고 맞춤 콘텐츠 알림 받기`를 눌렀는지 `나중에 받기`를 눌렀는지까지 설명하는 후속 이벤트는 이번 관찰 데이터에서는 확인되지 않았습니다. 따라서 이 구간은 **버튼별 후속 액션이 실제로 어떻게 계측되는지 추가 확인이 필요한 포인트**로 남았습니다.
+- `view_received_quote_list_page`
+  - `service_id`, `service_name`, `request_id`, `category_name`, `location`
+- `customer_landing_im`
+  - `service_id`, `service_name`, `request_id`
 
-#### 4-5. property 명명 규칙은 표준화 여지 존재 _(관련 구간: 3-1, 3-2, 3-4, 3-6)_
+두 번째 이벤트의 핵심 식별 정보는 첫 번째 이벤트 안에 이미 포함되어 있었습니다. 그래서 관찰 기준으로는, 이 둘이 **같은 진입을 다른 레이어에서 나눈 것인지**, 아니면 **페이지 진입과 특정 영역 landing을 분리해 관리하는 것인지**가 가장 궁금했습니다.
 
-관찰 과정에서는 `Member Type`과 `user_type`, `Service ID`와 `service_id`/`serviceId`처럼 같은 의미로 보이지만 표기 규칙이 다른 필드들이 함께 나타났습니다. 이런 차이는 raw를 읽는 단계에서는 큰 문제가 아니더라도, 이후 tracking plan 정리나 SQL 기반 검증 단계에서는 혼선을 만들 수 있습니다. 따라서 이 부분은 **property 명명 표준화가 필요한 포인트**로 남았습니다.
+즉 이 구간에서는 “두 이벤트가 비슷하다”보다, **굳이 왜 나눴는지**, 그리고 **각 이벤트를 어떤 분석 질문에 따로 쓰는지**를 실무에서 확인해보고 싶었습니다.
+
+#### 4-3. 알림 동의 화면에서는 action 정보가 어디에 저장되는지가 궁금했다 _(관련 구간: 3-5)_
+
+이 구간에서 Event Explore와 raw에서 직접 확인된 row는 `customer_info_input_start`였고, 보이는 property는 `location`, `sep_device_id`, `soomgo_session_id` 정도였습니다.
+
+즉 현재 제가 보고 있는 범위에서는 **화면이 시작됐다는 정보는 보이지만**, 사용자가 `동의하고 맞춤 콘텐츠 알림 받기`를 눌렀는지, `나중에 받기`를 눌렀는지 같은 action 정보는 보이지 않았습니다.
+
+그래서 이 구간은, 이런 action 정보가 **별도 이벤트로 저장되는지**, **다른 property나 user property로 보관되는지**, 아니면 **Amplitude Event Explore 화면에서는 바로 드러나지 않는 구조인지**가 궁금한 포인트로 남았습니다.
+
+#### 4-4. 같은 의미의 property가 이벤트마다 다른 이름으로 기록되는 점이 인상적이었다 _(관련 구간: 3-1, 3-2, 3-4, 3-6)_
+
+row 기준으로 보면 비슷한 의미의 값이 아래처럼 서로 다른 이름으로 기록되고 있었습니다.
+
+- 사용자 상태
+  - `View Main` → `Member Type`
+  - `customer_total_request_open` → `user_type`
+
+- 서비스 정보
+  - `Start Request Form` → `Service ID`, `Service Name`
+  - `view_received_quote_list_page` → `service_id`, `service_name`
+  - `complete_request_close_confirmation` → `serviceId`, `serviceName`
+
+- 위치 정보
+  - `View Main` → `location`
+  - `customer_total_request_open` → `location`
+  - `Start Request Form` → `Location`
+  - `view_received_quote_list_page` → `location`
+
+즉 같은 의미권으로 읽히는 값이 이벤트에 따라 **Title Case**, **snake_case**, **camelCase**로 섞여 있었습니다.
+
+그래서 이 부분은 단순히 “명명 규칙이 다르다”보다, 실무에서는 이런 차이를 **허용된 legacy 차이로 보는지**, 아니면 이후 canonical tracking plan에서 **하나의 naming convention으로 정리하는지**가 궁금한 포인트였습니다.
 
 ---
 
