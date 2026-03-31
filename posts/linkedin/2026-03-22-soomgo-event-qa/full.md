@@ -275,28 +275,6 @@ row 기준으로 보면 비슷한 의미의 값이 아래처럼 서로 다른 �
 - 기준: `Service ID/service_id/serviceId`, `Service Name/service_name/serviceName`, `requestServiceId[]/requestSendServiceId[]/content_category[]`
 - 체크: 비교 기준으로 맞췄을 때 null 없이 같은 의미로 읽히는지
 
-### 5-2. 식별자가 보강되면 추가로 해볼 수 있는 QA 제안
-
-#### 5-2-1. 마지막 step과 실제 submit을 직접 연결하는 QA
-- 현재 한계: `request_form_id`는 마지막 step까지 보이고, `request_id`는 `Submit Request`에서 처음 보임
-- 제안: `Submit Request`에도 `request_form_id`를 남김
-- 가능해지는 체크: 마지막 step 이후 `send_request_finished`, `Submit Request`가 같은 form 흐름에서 이어지는지 직접 검증 가능
-
-#### 5-2-2. 로그인 게이트 이후 원래 요청 흐름으로 복귀하는지 보는 QA
-- 현재 한계: 지금은 `soomgo_session_id`, `sep_device_id`로만 간접 확인 가능
-- 제안: 로그인 이후 이벤트에도 같은 form-level 식별자를 유지
-- 가능해지는 체크: `view_request_sign_in_step` 이후 `complete_user_sign_in`, `Submit Request`가 같은 요청 흐름으로 복귀하는지 직접 검증 가능
-
-#### 5-2-3. 제출 이후 후속 화면 진입을 request 단위로 보는 QA
-- 현재 한계: `customer_info_input_start`에는 `request_id`가 보이지 않음
-- 제안: `customer_info_input_start`에도 `request_id`를 남김
-- 가능해지는 체크: `Submit Request` 이후 후속 화면 진입과 받은 견적 진입을 같은 request로 직접 연결 가능
-
-#### 5-2-4. 사용자 응답이 최종 결과까지 반영됐는지 보는 QA
-- 현재 한계: `selected_answer`는 보이지만, submit 이후 결과 테이블과 직접 연결되는 값은 보이지 않음
-- 제안: request 생성 시 답변 snapshot 또는 answer-to-request mapping 필드를 남김
-- 가능해지는 체크: 사용자가 입력한 응답이 최종 request payload와 후속 결과에 제대로 반영됐는지 검증 가능
-
 ---
 
 ## 6. 회고
