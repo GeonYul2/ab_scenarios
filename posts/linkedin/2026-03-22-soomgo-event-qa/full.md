@@ -266,10 +266,12 @@ row 기준으로 보면 비슷한 의미의 값이 아래처럼 서로 다른 �
 - 기준: `click_request_form_step_next_button.selected_answer`
 - 체크: 화면에서 입력한 값이 `selected_answer`에 누락 없이 남는지
 
-#### 5-1-3. 서비스 카테고리 맥락이 시작부터 중간 단계까지 일관되게 유지되는지
+#### 5-1-3. 서비스 카테고리 맥락이 시작, 중간 단계, 제출 경계에서 일관되게 유지되는지
 - 시작 row: `Start Request Form.Service ID=404`, `Service Name=스피치 컨설팅`, `requestServiceId[]=['c1-29','c2-29','404']`, `content_category[]=['c1-29','c2-29','404']`
 - step row: `click_request_form_step_next_button.service_id=404`, `service_name=스피치 컨설팅`, `content_category[]=['c1-29','c2-29','404']`
-- 체크: 이벤트마다 property 이름은 다르지만, 시작 row와 step row가 같은 서비스/카테고리 맥락을 유지하는지
+- 제출 경계 row: `send_request_finished.requestSendServiceId[]=['c1-29','c2-29','404']`
+- 제출 row: `Submit Request.Service ID=404`, `Service Name=스피치 컨설팅`, `content_category[]=['c1-29','c2-29','404']`
+- 체크: 이벤트마다 property 이름은 다르지만, 시작부터 제출 경계까지 같은 서비스/카테고리 맥락이 유지되는지
 
 ---
 
