@@ -255,7 +255,7 @@ row 기준으로 보면 비슷한 의미의 값이 아래처럼 서로 다른 �
 
 ## 5. 실제 QA에서 검증할 로그 적재 포인트
 
-이 흐름의 QA는 **지금 sample로 직접 검증 가능한 것**만 먼저 고정하고, 나머지는 **식별자가 보강되면 추가로 해볼 수 있는 제안**으로 분리하는 편이 더 명확하다고 봤습니다.
+이번 sample에서는 아래 항목을 직접 확인할 수 있었습니다.
 
 ### 5-1. 현재 sample만으로 직접 검증 가능한 QA
 
@@ -267,13 +267,10 @@ row 기준으로 보면 비슷한 의미의 값이 아래처럼 서로 다른 �
 - 기준: `click_request_form_step_next_button.selected_answer`
 - 체크: 화면에서 입력한 값이 `selected_answer`에 누락 없이 남는지
 
-#### 5-1-3. 서비스 맥락이 시작부터 중간 단계까지 유지되는지
-- 기준: `Start Request Form.Service ID`, `Service Name`, `requestServiceId[]`, `content_category[]`; `click_request_form_step_next_button.service_id`, `service_name`, `content_category[]`
-- 체크: 시작 row와 step row가 모두 `404 / 스피치 컨설팅 / ['c1-29','c2-29','404']` 맥락을 유지하는지
-
-#### 5-1-4. 같은 의미의 property가 같은 기준으로 읽히는지
-- 기준: `Service ID/service_id/serviceId`, `Service Name/service_name/serviceName`, `requestServiceId[]/requestSendServiceId[]/content_category[]`
-- 체크: 비교 기준으로 맞췄을 때 null 없이 같은 의미로 읽히는지
+#### 5-1-3. 서비스 카테고리 맥락이 시작부터 중간 단계까지 일관되게 유지되는지
+- 시작 row: `Start Request Form.Service ID=404`, `Service Name=스피치 컨설팅`, `requestServiceId[]=['c1-29','c2-29','404']`, `content_category[]=['c1-29','c2-29','404']`
+- step row: `click_request_form_step_next_button.service_id=404`, `service_name=스피치 컨설팅`, `content_category[]=['c1-29','c2-29','404']`
+- 체크: 이벤트마다 property 이름은 다르지만, 시작 row와 step row가 같은 서비스/카테고리 맥락을 유지하는지
 
 ---
 
