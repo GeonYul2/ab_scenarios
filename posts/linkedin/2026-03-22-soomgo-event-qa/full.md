@@ -255,52 +255,58 @@ row 기준으로 보면 비슷한 의미의 값이 아래처럼 서로 다른 �
 
 ## 5. 실제 QA에서 검증할 로그 적재 포인트
 
-이 흐름에서 QA를 실제로 건다면, 사용자가 스피치 컨설팅 요청을 시작해 제출하고 받은 견적 화면까지 이어지는 핵심 여정이 로그에 의도한 형태로 남는지를 단계별로 확인해야 합니다. 제가 우선 볼 포인트는 아래 5가지입니다.
+이 흐름의 QA는 **직접 검증 가능한 구간**, **추가 확인이 필요한 구간**, **제안이 필요한 구간**으로 나눠서 보는 편이 명확합니다.
 
-#### 5-1. 요청폼 응답이 step별로 정확히 기록되는지
+### 5-1. 현재 sample만으로 직접 검증 가능한 QA
 
-관련 구간: 3-2
+#### 5-1-1. form 흐름이 마지막 step까지 잘 유지되는지
+- 기준: `Start Request Form.Form ID` = `click_request_form_step_next_button.request_form_id`
+- 체크: step이 1부터 마지막까지 이어지는지, 마지막 step에서만 `is_last_step=true`가 찍히는지
 
-핵심은 사용자가 화면에서 입력한 응답이 `click_request_form_step_next_button`에 빠짐없이 남는지 확인하는 것입니다.
+#### 5-1-2. 사용자 응답이 step 이벤트에 잘 기록되는지
+- 기준: `click_request_form_step_next_button.selected_answer`
+- 체크: 화면에서 입력한 값이 `selected_answer`에 누락 없이 남는지
 
-- 주요 이벤트/property: `click_request_form_step_next_button`, `request_form_id`, `step_index`, `step_type`, `selected_answer`, `is_last_step`
-- 검증 방법: 동일 `request_form_id` 기준으로 step 이벤트를 시간순으로 정렬합니다. `step_index`가 자연스럽게 증가하는지 확인합니다. 화면에서 입력한 값과 `selected_answer`를 대조합니다. 마지막 단계에서만 `is_last_step=true`가 기재되는지도 함께 확인합니다.
+#### 5-1-3. 서비스 맥락이 pre-submit 구간에서 유지되는지
+- 기준: `Service ID/service_id`, `Service Name/service_name`, `requestServiceId[]/content_category[]`
+- 체크: form 시작 row와 step row가 모두 `404 / 스피치 컨설팅 / ['c1-29','c2-29','404']` 맥락을 유지하는지
 
-#### 5-2. 서비스 맥락이 폼 시작부터 제출 시점까지 일관되게 유지되는지
+#### 5-1-4. 같은 의미의 property가 일관되게 해석되는지
+- 기준: `Service ID/service_id/serviceId`, `Service Name/service_name/serviceName`, `requestServiceId[]/requestSendServiceId[]/content_category[]`
+- 체크: canonical 기준으로 변환했을 때 null 없이 같은 의미로 읽히는지
 
-관련 구간: 3-2 ~ 3-4
+### 5-2. 연속적으로 읽히지만 추가 확인이 필요한 QA
 
-핵심은 사용자가 처음 선택한 서비스가 제출 시점까지 같은 맥락으로 유지되는지 확인하는 것입니다.
+#### 5-2-1. 로그인 게이트 이후 원래 요청 흐름으로 복귀하는지
+- 기준: `view_request_sign_in_step` → `complete_user_sign_in` → `send_request_finished` → `Submit Request`
+- 연결: `soomgo_session_id`, `sep_device_id`
+- 체크: sign-in 이후 submit까지 같은 흐름으로 이어지는지
 
-- 주요 이벤트/property: `Start Request Form`의 `Service ID`, `Service Name`, `requestServiceId[]`, `content_category[]`; `click_request_form_step_next_button`의 `service_id`, `service_name`; `send_request_finished`의 `requestSendServiceId[]`; `Submit Request`의 `Service ID`, `Service Name`, `content_category[]`
-- 검증 방법: 이벤트마다 property 이름이 다르므로 먼저 비교 기준을 맞춥니다. 그 다음 동일 흐름 안에서 `Service ID`/`service_id`, `Service Name`/`service_name`, `requestServiceId[]`, `requestSendServiceId[]`, `content_category[]`가 같은 서비스 맥락을 가리키는지 확인합니다.
+#### 5-2-2. 마지막 step 이후 submit boundary가 잘 이어지는지
+- 기준: 마지막 `click_request_form_step_next_button` 이후 `send_request_finished`, `Submit Request`
+- 연결: `soomgo_session_id`, `sep_device_id`
+- 체크: 순서가 끊기지 않는지, `Submit Request`에 `request_id`가 남는지
+- 한계: `request_form_id`와 `request_id`를 직접 잇는 property는 이번 sample에서 보이지 않음
 
-#### 5-3. 마지막 step 이후 제출 흐름이 끊기지 않는지
+#### 5-2-3. 제출 이후 후속 화면과 받은 견적 진입이 이어지는지
+- 기준: `Submit Request` → `customer_info_input_start` → `view_received_quote_list_page` / `customer_landing_im`
+- 연결: `customer_info_input_start`는 `soomgo_session_id`, `sep_device_id`; 받은 견적 진입은 `request_id`
+- 체크: 후속 화면 진입과 request 단위 continuity가 모두 유지되는지
 
-관련 구간: 3-4
+### 5-3. 실무적으로 추가되면 좋은 제안형 QA
 
-핵심은 마지막 step 완료 이후 제출 관련 이벤트가 같은 흐름 안에서 이어지는지 확인하는 것입니다.
+#### 5-3-1. submit 경계 식별자 보강
+- 제안: `Submit Request`에도 `request_form_id`를 남김
+- 이유: pre-submit과 post-submit을 직접 연결하기 쉬워짐
 
-- 주요 이벤트/property: `click_request_form_step_next_button`, `is_last_step`, `request_form_id`, `send_request_finished`, `requestSendServiceId`, `Submit Request`, `request_id`, `soomgo_session_id`, `sep_device_id`
-- 검증 방법: `is_last_step=true`가 기록된 row를 anchor로 둡니다. 이후 같은 `soomgo_session_id`, `sep_device_id` 흐름 안에서 `send_request_finished`와 `Submit Request`가 순서대로 이어지는지 확인합니다. `Submit Request`에 `request_id`가 정상 기재되는지도 함께 봅니다. 이 구간은 직접 연결 property가 보이지 않았기 때문에, 연속성 자체가 중요한 QA 포인트가 됩니다.
+#### 5-3-2. post-submit 식별자 보강
+- 제안: `customer_info_input_start`에도 `request_id`를 남김
+- 이유: 후속 화면 진입을 request 단위로 바로 검증할 수 있음
 
-#### 5-4. 로그인 게이트 이후 원래 요청 흐름으로 복귀하는지
+#### 5-3-3. 응답-결과 반영 QA 보강
+- 현재 가능한 것: 응답이 `selected_answer`에 남는지 확인
+- 추가로 필요한 것: 응답이 최종 request payload와 후속 결과에 어떻게 반영됐는지 검증할 필드
 
-관련 구간: 3-3 ~ 3-4
-
-핵심은 게스트 사용자가 로그인 단계를 거친 뒤에도 원래 작성하던 요청 흐름으로 복귀해 제출까지 이어지는지 확인하는 것입니다.
-
-- 주요 이벤트/property: `view_request_sign_in_step`, `complete_user_sign_in`, `send_request_finished`, `Submit Request`, `soomgo_session_id`, `sep_device_id`
-- 검증 방법: 로그인 게이트 노출 이후 같은 `soomgo_session_id`, `sep_device_id` 흐름 안에서 `complete_user_sign_in`이 이어지는지 확인합니다. 그 뒤 제출 관련 이벤트까지 계속 이어지는지도 함께 봅니다. 로그인 완료는 있었지만 제출이 없다면 recovery 실패 후보로 볼 수 있습니다.
-
-#### 5-5. 제출 이후 후속 화면과 받은 견적 진입이 정상적으로 이어지는지
-
-관련 구간: 3-5 ~ 3-6
-
-핵심은 제출 이후 후속 화면 진입과 받은 견적 진입이 같은 요청 흐름 안에서 이어지는지 확인하는 것입니다.
-
-- 주요 이벤트/property: `Submit Request`의 `request_id`, `soomgo_session_id`, `sep_device_id`; `customer_info_input_start`의 `location`, `soomgo_session_id`, `sep_device_id`; `view_received_quote_list_page`의 `request_id`, `service_id`, `service_name`; `customer_landing_im`의 `request_id`, `service_id`, `service_name`
-- 검증 방법: `Submit Request` 직후 같은 `soomgo_session_id`, `sep_device_id` 흐름에서 `customer_info_input_start`가 이어지는지 먼저 확인합니다. 이후 `view_received_quote_list_page`와 `customer_landing_im`에 같은 `request_id`가 기재되는지 확인합니다. 제출 이후 화면 전환과 request 단위 연속성을 나눠서 보는 방식입니다.
 ---
 
 ## 6. 회고
