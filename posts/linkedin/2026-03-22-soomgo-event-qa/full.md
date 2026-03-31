@@ -130,7 +130,7 @@
 
 > 이 구간은 마지막 step(진행률 100%) 화면과 raw event를 함께 보며 해석했습니다.
 
-요청폼 마지막 단계에서는 사용자가 최종 답변을 입력한 뒤 `1개 서비스 무료견적 받기` 버튼을 누를 수 있었습니다. raw event 기준으로는 이 직전 마지막 step 이벤트와, 그 직후의 제출 관련 이벤트들이 연속해서 관찰됐습니다.
+요청폼 마지막 단계에서는 사용자가 최종 답변을 입력한 뒤 `1개 서비스 무료견적 받기` 버튼을 누를 수 있었습니다. raw event 기준으로는 마지막 step 이벤트 직후 제출 관련 이벤트가 연속해서 관찰됐습니다.
 
 <details>
 <summary>관찰 이벤트 / 핵심 property</summary>
@@ -139,17 +139,17 @@
 | --- | --- |
 | `click_request_form_step_next_button` | `request_form_id`, `step_index=10`, `is_last_step=true`, `selected_answer`, `service_id`, `service_name` |
 | `send_request_finished` | `requestSendServiceId[]`, `sep_device_id`, `soomgo_session_id` |
-| `Submit Request` | `request_id`, `service_id`, `service_name`, `content_category`, `request_type`, `form_type`, `sep_device_id`, `soomgo_session_id` |
+| `Submit Request` | `request_id`, `Service ID`, `Service Name`, `content_category`, `request_type`, `form_type`, `sep_device_id`, `soomgo_session_id` |
 
 </details>
 
-raw log를 시간순으로 보면 마지막 `click_request_form_step_next_button`에서 `is_last_step=true`가 기록된 뒤, `send_request_finished`와 `Submit Request`가 수십 ms 간격으로 이어졌습니다. 이 흐름을 통해 적어도 이번 sample에서는 **마지막 step 완료 → 제출 처리 → 실제 request 생성**이라는 순서를 읽을 수 있었습니다.
+raw log를 시간순으로 보면 마지막 `click_request_form_step_next_button`에서 `is_last_step=true`가 기록된 뒤, `send_request_finished`와 `Submit Request`가 수십 ms 간격으로 이어졌습니다. 이번 sample에서는 **마지막 step 완료 이후 제출 관련 이벤트가 연속적으로 기록되는 흐름**을 확인할 수 있었습니다.
 
-여기서 중요한 점은 `request_form_id`와 `request_id`의 역할이 달라 보인다는 것입니다. `request_form_id`는 마지막 step까지 유지되며 작성 중인 폼 흐름을 식별하는 값으로 보였고, `request_id`는 `Submit Request` 시점에 처음 등장하며 제출 후 실제 생성된 request를 식별하는 값으로 보였습니다.
+마지막 step 이벤트에는 `request_form_id`가 남아 있습니다. `Submit Request`에서는 `request_id`가 등장합니다. 작성 중인 폼 흐름과 제출 이후 요청 흐름이 서로 다른 식별자 체계로 기록되는 것처럼 보였습니다.
 
-다만 현재 sample에서는 `request_form_id`와 `request_id`를 직접 이어주는 공통 property는 확인되지 않았습니다. 대신 이번 관찰에서는 같은 `sep_device_id`, 같은 `soomgo_session_id`, 같은 `service_id`/`service_name`, 그리고 매우 짧은 시간 간격을 근거로 하나의 요청 흐름이라고 해석했습니다. 따라서 **이 둘의 직접 매핑은 확인하지 못했고, 이번 sample에 한해 session/device/time continuity로 연결을 추정했다**고 보는 것이 가장 안전합니다.
+특정 고객이 마지막 응답을 마치고 실제 견적 요청서를 제출하는 과정을 하나의 흐름으로 분석하려면, 이 두 식별자를 이어주는 기준이 필요해 보였습니다. 이번 sample에서는 마지막 `click_request_form_step_next_button`의 `request_form_id`와 `Submit Request`의 `request_id`를 직접 연결해주는 property는 관찰되지 않았습니다.
 
-또한 이 sample 하나만으로 “항상 같은 session/device 상태로 제출까지 이어진다”고 일반화할 수는 없습니다. 다중 탭, 세션 재개, 로그인 이후 재진입 같은 예외 케이스는 추가 sample 확인이 필요합니다.
+관찰된 row만 기준으로 보면, 이 구간은 `soomgo_session_id`와 `sep_device_id`를 함께 보며 같은 요청 흐름인지 확인하는 방식으로 읽을 수 있었습니다. 이것이 실제 내부에서 사용하는 매핑 기준인지는 이번 sample만으로는 확인할 수 없었습니다.
 
 ---
 
@@ -190,7 +190,7 @@ raw log를 시간순으로 보면 마지막 `click_request_form_step_next_button
 
 </details>
 
-이 구간에서는 `view_received_quote_list_page`와 `customer_landing_im`이 연달아 관찰됐고, 두 이벤트 모두 같은 `request_id`, `service_id`, `service_name`을 공유했습니다. 이번 샘플만 놓고 보면 `customer_landing_im`의 property는 `view_received_quote_list_page`의 핵심 식별 정보와 크게 다르지 않아, 이 구간은 **이벤트 통합 또는 역할 재정의가 필요한 후보 포인트**로 정리할 수 있었습니다.
+이 구간에서는 `view_received_quote_list_page`와 `customer_landing_im`이 연달아 관찰됐고, 두 이벤트 모두 같은 `request_id`, `service_id`, `service_name`을 공유했습니다. 이번 sample만 놓고 보면 `customer_landing_im`의 property는 `view_received_quote_list_page`의 핵심 식별 정보와 크게 다르지 않았습니다. 두 이벤트가 왜 분리되어 있는지, 각각 어떤 역할을 갖는지는 관찰만으로는 분명하게 읽히지 않았습니다.
 
 ---
 
@@ -207,9 +207,9 @@ raw log를 시간순으로 보면 마지막 `click_request_form_step_next_button
 - `Submit Request`
   - `request_id`, `Service ID`, `Service Name`, `content_category`, `content_ids`, `Location`, `sep_device_id`, `soomgo_session_id`
 
-여기서 마지막 step 이벤트까지는 `request_form_id`로 흐름을 읽을 수 있었지만, `Submit Request`에서는 `request_id`가 등장했고, 그 사이의 `send_request_finished`에는 `request_form_id`도 `request_id`도 직접 보이지 않았습니다.
+특정 고객이 마지막 응답을 마치고 실제 견적 요청서를 제출하는 과정을 하나의 흐름으로 분석하려면, `request_form_id`와 `request_id`를 이어주는 기준이 필요해 보였습니다. 이번 sample에서는 마지막 `click_request_form_step_next_button`의 `request_form_id`와 `Submit Request`의 `request_id`를 직접 연결해주는 property는 관찰되지 않았습니다.
 
-그래서 이 구간을 보며, 실무에서는 **`request_form_id`와 `request_id`를 어떤 기준으로 연결하는지**, 그리고 그 연결을 **`soomgo_session_id`나 `sep_device_id` 같은 session/device 기반으로 매핑하는지**, 아니면 별도의 내부 기준이 있는지가 궁금했습니다.
+관찰된 row만 기준으로 보면, 이 구간은 `soomgo_session_id`와 `sep_device_id`를 함께 보며 읽어야 할 가능성이 높았습니다. 실제 내부에서 어떤 매핑 기준을 사용하는지는 추가로 확인해보고 싶었습니다.
 
 #### 4-2. 받은 견적 진입 구간에서는 왜 두 이벤트로 나뉘는지가 궁금했다 _(관련 구간: 3-6)_
 
@@ -220,17 +220,13 @@ raw log를 시간순으로 보면 마지막 `click_request_form_step_next_button
 - `customer_landing_im`
   - `service_id`, `service_name`, `request_id`
 
-두 번째 이벤트의 핵심 식별 정보는 첫 번째 이벤트 안에 이미 포함되어 있었습니다. 그래서 관찰 기준으로는, 이 둘이 **같은 진입을 다른 레이어에서 나눈 것인지**, 아니면 **페이지 진입과 특정 영역 landing을 분리해 관리하는 것인지**가 가장 궁금했습니다.
-
-즉 이 구간에서는 “두 이벤트가 비슷하다”보다, **굳이 왜 나눴는지**, 그리고 **각 이벤트를 어떤 분석 질문에 따로 쓰는지**를 실무에서 확인해보고 싶었습니다.
+두 번째 이벤트의 핵심 식별 정보는 첫 번째 이벤트 안에 이미 포함되어 있었습니다. 이 구간에서는 두 이벤트를 굳이 왜 나눴는지, 각각 어떤 분석 질문에 쓰는지가 가장 궁금했습니다.
 
 #### 4-3. 알림 동의 화면에서는 action 정보가 어디에 저장되는지가 궁금했다 _(관련 구간: 3-5)_
 
 이 구간에서 Event Explore와 raw에서 직접 확인된 row는 `customer_info_input_start`였고, 보이는 property는 `location`, `sep_device_id`, `soomgo_session_id` 정도였습니다.
 
-즉 현재 제가 보고 있는 범위에서는 **화면이 시작됐다는 정보는 보이지만**, 사용자가 `동의하고 맞춤 콘텐츠 알림 받기`를 눌렀는지, `나중에 받기`를 눌렀는지 같은 action 정보는 보이지 않았습니다.
-
-그래서 이 구간은, 이런 action 정보가 **별도 이벤트로 저장되는지**, **다른 property나 user property로 보관되는지**, 아니면 **Amplitude Event Explore 화면에서는 바로 드러나지 않는 구조인지**가 궁금한 포인트로 남았습니다.
+화면이 시작됐다는 정보는 보였습니다. 사용자가 어떤 버튼을 눌렀는지를 설명하는 action 정보는 확인되지 않았습니다. 이 정보가 실제로 어떤 이벤트나 property에 기록되는지가 궁금한 포인트로 남았습니다.
 
 #### 4-4. 같은 의미의 property가 이벤트마다 다른 이름으로 기록되는 점이 인상적이었다 _(관련 구간: 3-1, 3-2, 3-4, 3-6)_
 
@@ -253,7 +249,7 @@ row 기준으로 보면 비슷한 의미의 값이 아래처럼 서로 다른 �
 
 즉 같은 의미권으로 읽히는 값이 이벤트에 따라 **Title Case**, **snake_case**, **camelCase**로 섞여 있었습니다.
 
-그래서 이 부분은 단순히 “명명 규칙이 다르다”보다, 실무에서는 이런 차이를 **허용된 legacy 차이로 보는지**, 아니면 이후 canonical tracking plan에서 **하나의 naming convention으로 정리하는지**가 궁금한 포인트였습니다.
+실무에서는 이런 차이를 허용된 legacy로 보는지, 아니면 하나의 naming convention으로 정리하는지가 궁금했습니다.
 
 ---
 
@@ -276,8 +272,8 @@ row 기준으로 보면 비슷한 의미의 값이 아래처럼 서로 다른 �
 
 핵심은 사용자가 처음 선택한 서비스가 폼 시작, step 진행, 제출 시점까지 동일한 맥락으로 유지되는지 확인하는 것입니다.
 
-- 주요 이벤트/property: `Start Request Form`, `click_request_form_step_next_button`, `Submit Request`, `Service ID`, `Service Name`, `service_id`, `service_name`, `requestServiceId`, `content_category`, `request_form_id`
-- 검증 방법: 동일 `request_form_id`를 기준으로 폼 시작 이벤트와 step 이벤트를 묶고, 마지막 step 이후 같은 session/device/service context에서 발생한 `Submit Request`의 `service_id` 및 `service_name`이 같은 서비스 맥락을 가리키는지 비교합니다.
+- 주요 이벤트/property: `Start Request Form`, `click_request_form_step_next_button`, `Submit Request`, `request_form_id`, `requestServiceId`, `content_category`, `service_id`, `service_name`, `Service ID`, `Service Name`
+- 검증 방법: 동일 `request_form_id`를 기준으로 폼 시작 이벤트와 step 이벤트를 묶고, 마지막 step 이후 같은 `soomgo_session_id`, `sep_device_id` 흐름에서 발생한 `Submit Request`의 `Service ID`, `Service Name`이 같은 서비스 맥락을 가리키는지 비교합니다.
 
 #### 5-3. 마지막 입력 이후 제출 이벤트가 정상적으로 기재되는지
 
@@ -285,8 +281,8 @@ row 기준으로 보면 비슷한 의미의 값이 아래처럼 서로 다른 �
 
 핵심은 폼 입력이 완료된 뒤 실제 제출 이벤트가 빠짐없이 생성되고, 제출 결과를 식별할 수 있는 값이 함께 남는지 확인하는 것입니다.
 
-- 주요 이벤트/property: `click_request_form_step_next_button`, `send_request_finished`, `Submit Request`, `is_last_step`, `request_id`, `service_id`, `requestSendServiceId`
-- 검증 방법: `is_last_step=true`가 기록된 이후 `send_request_finished`와 `Submit Request`가 이어지는지 확인하고, 현재 sample에서는 같은 session/device/service context 안에서 `Submit Request`에 `request_id`가 정상 기재되는지 비교합니다.
+- 주요 이벤트/property: `click_request_form_step_next_button`, `send_request_finished`, `Submit Request`, `is_last_step`, `request_id`, `requestSendServiceId`, `soomgo_session_id`, `sep_device_id`
+- 검증 방법: `is_last_step=true`가 기록된 이후 `send_request_finished`와 `Submit Request`가 이어지는지 확인하고, 현재 sample에서는 같은 `soomgo_session_id`, `sep_device_id` 흐름 안에서 `Submit Request`에 `request_id`가 정상 기재되는지 비교합니다.
 
 #### 5-4. 비로그인 사용자가 로그인 후에도 같은 요청 흐름으로 복귀하는지
 
@@ -304,7 +300,7 @@ row 기준으로 보면 비슷한 의미의 값이 아래처럼 서로 다른 �
 핵심은 제출된 요청이 실제로 받은 견적 화면까지 이어지고, 그 후속 이벤트가 같은 request 맥락 안에서 연결되는지 확인하는 것입니다.
 
 - 주요 이벤트/property: `Submit Request`, `view_received_quote_list_page`, `customer_landing_im`, `request_id`, `service_id`, `service_name`
-- 검증 방법: `Submit Request.request_id`를 기준으로 후속 이벤트를 연결해 `view_received_quote_list_page`와 `customer_landing_im`이 같은 request에 기재되는지 비교합니다.
+- 검증 방법: `Submit Request.request_id`를 기준으로 후속 이벤트를 연결하고, `view_received_quote_list_page`와 `customer_landing_im`에 같은 `request_id`가 기재되는지 비교합니다.
 
 ---
 
