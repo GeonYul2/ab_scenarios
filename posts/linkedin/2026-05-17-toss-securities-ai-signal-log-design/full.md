@@ -25,6 +25,10 @@
 
 관찰한 흐름은 **관심 탭에서 AI 시그널을 보고, 국내주식 시그널 상세와 연관 기업을 거쳐 최종 종목 상세로 이동하는 여정**입니다.
 
+<img src="./assets/00_flow.png" alt="토스증권 AI 시그널 탐색 플로우 1부터 8까지" width="900" />
+
+위 이미지는 전체 흐름을 먼저 보기 위한 요약이고, 아래 표와 본문에서는 각 화면별 view/click 이벤트를 나눠 설명합니다.
+
 | Step | Screen | View event | Transition event |
 | --- | --- | --- | --- |
 | 1 | 토스증권 메인 | `view_main` | `click_watchlist_tab` |
